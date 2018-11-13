@@ -100,9 +100,43 @@ namespace Swashbuckle.AspNetCore.Annotations
             }
         }
 
-        private object[] GetOrderedControllerAttributes(OperationFilterContext context)
+        private ICollection<object> GetOrderedControllerAttributes(OperationFilterContext context)
         {
-            return context.MethodInfo.DeclaringType.GetTypeInfo().GetCustomAttributes(true).Reverse().ToArray();
+            var allAttributes = context.MethodInfo.DeclaringType
+                .GetTypeInfo()
+                .GetCustomAttributes(true)
+                .ToArray();
+
+            // If there are multiple response attributes, sort them so that the "last one wins"
+            int responseAttributeCount = allAttributes.OfType<SwaggerResponseAttribute>().Count();
+
+            if (responseAttributeCount > 1)
+            {
+                var otherAttributes = allAttributes.Where(x => !(x is SwaggerResponseAttribute));
+                var responseAttributes = GetSortedResponseAttributes(context.MethodInfo.DeclaringType);
+
+                allAttributes = otherAttributes.Concat(responseAttributes).ToArray();
+            }
+
+            return allAttributes;
+        }
+
+        private List<SwaggerResponseAttribute> GetSortedResponseAttributes(Type actionDeclaringType)
+        {
+            var result = new List<SwaggerResponseAttribute>();
+
+            // Walk the class hierarchy of the declaring class for the action to find the response attributes
+            Type type = actionDeclaringType;
+
+            while (type != null)
+            {
+                result.AddRange(type.GetCustomAttributes<SwaggerResponseAttribute>(inherit: false));
+                type = type.BaseType;
+            }
+
+            result.Reverse(); // We want the most derived type's attributes to be last so that they "win"
+
+            return result;
         }
     }
 }
