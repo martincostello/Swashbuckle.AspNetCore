@@ -11,8 +11,19 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
     {
         private readonly ChainableSchemaGenerator _generatorChain;
 
+#if !NETCOREAPP3_0
+        [Obsolete("Use SchemaGenerator.ctor(IOptions<SchemaGeneratorOptions>, ISerializerSettingsAccessor) instead.")]
         public SchemaGenerator(IOptions<SchemaGeneratorOptions> optionsAccessor, IOptions<MvcJsonOptions> jsonOptionsAccessor)
             : this(optionsAccessor.Value, jsonOptionsAccessor.Value?.SerializerSettings)
+        { }
+#endif
+
+        public SchemaGenerator(IOptions<SchemaGeneratorOptions> optionsAccessor, ISerializerSettingsAccessor serializationSettingsAccessor)
+            : this(optionsAccessor.Value, serializationSettingsAccessor?.SerializerSettings)
+        { }
+
+        public SchemaGenerator(IOptions<SchemaGeneratorOptions> optionsAccessor, IOptions<JsonSerializerSettings> serializerSettingsAccessor)
+            : this(optionsAccessor.Value, serializerSettingsAccessor.Value)
         { }
 
         public SchemaGenerator(SchemaGeneratorOptions options, JsonSerializerSettings serializerSettings)
