@@ -4,7 +4,7 @@
 
   <PropertyGroup>
     <Description>Middleware to expose an embedded version of ReDoc from an ASP.NET Core application</Description>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>netstandard2.0;netcoreapp3.0</TargetFrameworks>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <AssemblyName>Swashbuckle.AspNetCore.ReDoc</AssemblyName>
@@ -21,12 +21,13 @@
   <ItemGroup>
     <EmbeddedResource Include="index.html" />
     <EmbeddedResource Include="node_modules/redoc/bundles/redoc.standalone.js" />
+    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" Condition=" '$(TargetFramework)' == 'netcoreapp3.0' " />
   </ItemGroup>
 
-  <ItemGroup>
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.0.0" />
     <PackageReference Include="Microsoft.Extensions.FileProviders.Embedded" Version="2.0.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
   </ItemGroup>
 </Project>
