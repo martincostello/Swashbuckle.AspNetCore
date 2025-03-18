@@ -1,15 +1,10 @@
-using System;
 using System.Globalization;
-using System.Linq;
-using System.Net.Http;
 using System.Reflection;
 #if NET8_0_OR_GREATER
 #endif
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.OpenApi.Any;
-using Xunit;
 using ReDocApp = ReDoc;
 
 namespace Swashbuckle.AspNetCore.IntegrationTests
@@ -107,12 +102,8 @@ namespace Swashbuckle.AspNetCore.IntegrationTests
         }
 
         [Theory]
-#if NET10_0_OR_GREATER
         [InlineData("/swagger/v1/swaggerv3_1.json", "openapi", "3.1.1")]
         [InlineData("/swagger/v1/swagger.json", "openapi", "3.0.4")]
-#else
-        [InlineData("/swagger/v1/swagger.json", "openapi", "3.0.1")]
-#endif
         [InlineData("/swagger/v1/swaggerv2.json", "swagger", "2.0")]
         public async Task SwaggerMiddleware_CanBeConfiguredMultipleTimes(
             string swaggerUrl,
@@ -133,11 +124,9 @@ namespace Swashbuckle.AspNetCore.IntegrationTests
         [Theory]
         [InlineData(typeof(MinimalApp.Program), "/swagger/v1/swagger.json")]
         [InlineData(typeof(TopLevelSwaggerDoc.Program), "/swagger/v1.json")]
-#if NET8_0_OR_GREATER
         [InlineData(typeof(MvcWithNullable.Program), "/swagger/v1/swagger.json")]
         [InlineData(typeof(WebApi.Program), "/swagger/v1/swagger.json")]
         [InlineData(typeof(WebApi.Aot.Program), "/swagger/v1/swagger.json")]
-#endif
         public async Task SwaggerEndpoint_ReturnsValidSwaggerJson_Without_Startup(
             Type entryPointType,
             string swaggerRequestUri)
@@ -145,7 +134,6 @@ namespace Swashbuckle.AspNetCore.IntegrationTests
             await SwaggerEndpointReturnsValidSwaggerJson(entryPointType, swaggerRequestUri);
         }
 
-#if NET8_0_OR_GREATER
         [Fact]
         public async Task TypesAreRenderedCorrectly()
         {
@@ -183,7 +171,6 @@ namespace Swashbuckle.AspNetCore.IntegrationTests
                 () => Assert.True(properties.GetProperty("temperatureF").GetProperty("readOnly").GetBoolean()),
             ]);
         }
-#endif
 
         private static async Task SwaggerEndpointReturnsValidSwaggerJson(Type entryPointType, string swaggerRequestUri)
         {

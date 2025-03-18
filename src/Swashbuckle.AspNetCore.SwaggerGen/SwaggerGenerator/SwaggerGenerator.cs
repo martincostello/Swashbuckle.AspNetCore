@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -421,6 +416,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 if (apiParameter is not null)
                 {
                     var (parameterAndContext, filterContext) = GenerateParameterAndContext(apiParameter, schemaRepository);
+                    parameter.Name = parameterAndContext.Name;
                     parameter.Schema = parameterAndContext.Schema;
                     parameter.Description ??= parameterAndContext.Description;
 

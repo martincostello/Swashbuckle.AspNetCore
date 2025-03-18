@@ -4,7 +4,6 @@ using System.Text.Json;
 using Microsoft.OpenApi.Any;
 #endif
 using Microsoft.OpenApi.Models;
-using Xunit;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 {
@@ -84,6 +83,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen.Test
             Assert.Null(example);
 #else
             Assert.NotNull(example);
+
             var actual = Assert.IsType<OpenApiNull>(example);
             Assert.Equal(AnyType.Null, actual.AnyType);
 #endif

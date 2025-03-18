@@ -1,9 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text;
@@ -20,6 +16,8 @@ namespace Swashbuckle.AspNetCore.Cli
 {
     internal class Program
     {
+        private const string OpenApiVersionOption = "--openapiversion";
+
         public static int Main(string[] args)
         {
             // Helper to simplify command line parsing etc.
@@ -31,7 +29,7 @@ namespace Swashbuckle.AspNetCore.Cli
             // startupassembly and it's transitive dependencies. See https://github.com/dotnet/coreclr/issues/13277 for more.
 
             // > dotnet swagger tofile ...
-            runner.SubCommand("tofile", "retrieves Swagger from a startup assembly, and writes to file ", c =>
+            runner.SubCommand("tofile", "retrieves Swagger from a startup assembly, and writes to file", c =>
             {
                 c.Argument("startupassembly", "relative path to the application's startup assembly");
                 c.Argument("swaggerdoc", "name of the swagger doc you want to retrieve, as configured in your startup class");
@@ -39,17 +37,17 @@ namespace Swashbuckle.AspNetCore.Cli
                 c.Option("--output", "relative path where the Swagger will be output, defaults to stdout");
                 c.Option("--host", "a specific host to include in the Swagger output");
                 c.Option("--basepath", "a specific basePath to include in the Swagger output");
-                c.Option("--openapiversion", "output Swagger in the specified version, defaults to 3.0");
+                c.Option(OpenApiVersionOption, "output Swagger in the specified version, defaults to 3.0");
                 c.Option("--yaml", "exports swagger in a yaml format", true);
 
                 c.OnRun((namedArgs) =>
                 {
                     string subProcessCommandLine = PrepareCommandLine(args, namedArgs);
 
-                    var subProcess = Process.Start("dotnet", subProcessCommandLine);
+                    using var child = Process.Start("dotnet", subProcessCommandLine);
 
-                    subProcess.WaitForExit();
-                    return subProcess.ExitCode;
+                    child.WaitForExit();
+                    return child.ExitCode;
                 });
             });
 
@@ -61,8 +59,9 @@ namespace Swashbuckle.AspNetCore.Cli
                 c.Option("--output", "");
                 c.Option("--host", "");
                 c.Option("--basepath", "");
-                c.Option("--openapiversion", "");
+                c.Option(OpenApiVersionOption, "");
                 c.Option("--yaml", "", true);
+
                 c.OnRun((namedArgs) =>
                 {
                     SetupAndRetrieveSwaggerProviderAndOptions(namedArgs, out var swaggerProvider, out var swaggerOptions);
@@ -154,10 +153,10 @@ namespace Swashbuckle.AspNetCore.Cli
                 {
                     string subProcessCommandLine = PrepareCommandLine(args, namedArgs);
 
-                    var subProcess = Process.Start("dotnet", subProcessCommandLine);
+                    using var child = Process.Start("dotnet", subProcessCommandLine);
 
-                    subProcess.WaitForExit();
-                    return subProcess.ExitCode;
+                    child.WaitForExit();
+                    return child.ExitCode;
                 });
             });
 
@@ -207,7 +206,7 @@ namespace Swashbuckle.AspNetCore.Cli
             return runner.Run(args);
         }
 
-        private static void SetupAndRetrieveSwaggerProviderAndOptions(System.Collections.Generic.IDictionary<string, string> namedArgs, out ISwaggerProvider swaggerProvider, out IOptions<SwaggerOptions> swaggerOptions)
+        private static void SetupAndRetrieveSwaggerProviderAndOptions(IDictionary<string, string> namedArgs, out ISwaggerProvider swaggerProvider, out IOptions<SwaggerOptions> swaggerOptions)
         {
             // 1) Configure host with provided startupassembly
             var startupAssembly = AssemblyLoadContext.Default.LoadFromAssemblyPath(
@@ -221,7 +220,7 @@ namespace Swashbuckle.AspNetCore.Cli
             swaggerOptions = serviceProvider.GetService<IOptions<SwaggerOptions>>();
         }
 
-        private static string PrepareCommandLine(string[] args, System.Collections.Generic.IDictionary<string, string> namedArgs)
+        private static string PrepareCommandLine(string[] args, IDictionary<string, string> namedArgs)
         {
             if (!File.Exists(namedArgs["startupassembly"]))
             {

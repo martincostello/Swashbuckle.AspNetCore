@@ -1,4 +1,3 @@
-﻿using System.IO;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Writers;
 

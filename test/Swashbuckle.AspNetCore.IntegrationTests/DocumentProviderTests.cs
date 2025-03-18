@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Microsoft.Extensions.ApiDescriptions;
 using Microsoft.OpenApi.Models;
 #if NET10_0_OR_GREATER
@@ -9,7 +6,6 @@ using Microsoft.OpenApi.Reader;
 using Microsoft.OpenApi.Readers;
 #endif
 using Swashbuckle.AspNetCore.Swagger;
-using Xunit;
 
 namespace Swashbuckle.AspNetCore.IntegrationTests
 {

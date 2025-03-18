@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using Microsoft.OpenApi.Models;
 #if NET10_0_OR_GREATER
 using Microsoft.OpenApi.Models.References;

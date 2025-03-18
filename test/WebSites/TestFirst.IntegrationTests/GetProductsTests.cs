@@ -1,6 +1,3 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Swashbuckle.AspNetCore.ApiTesting.Xunit;
 using Xunit;

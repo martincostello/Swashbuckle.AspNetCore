@@ -1,21 +1,13 @@
-using System;
 using System.Globalization;
 using System.Reflection;
 using Basic.Swagger;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Localization;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 
 namespace Basic
 {
     public class Startup(IConfiguration configuration)
     {
-        public IConfiguration Configuration { get; } = configuration;
-
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();

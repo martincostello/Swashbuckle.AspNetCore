@@ -1,5 +1,3 @@
-﻿using System;
-using System.IO;
 using Microsoft.OpenApi.Models;
 #if !NET10_0_OR_GREATER
 using Microsoft.OpenApi.Readers;
@@ -21,7 +19,7 @@ namespace Swashbuckle.AspNetCore.ApiTesting
             var result = OpenApiDocument.Load(memoryStream);
             options.OpenApiDocs.Add(documentName, result.Document);
 #else
-            var openApiDocument = new OpenApiStreamReader().Read(fileStream, out OpenApiDiagnostic diagnostic);
+            var openApiDocument = new OpenApiStreamReader().Read(fileStream, out var diagnostic);
             options.OpenApiDocs.Add(documentName, openApiDocument);
 #endif
         }

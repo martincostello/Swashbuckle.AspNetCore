@@ -1,6 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using Swashbuckle.AspNetCore.TestSupport.Utilities;
 using Xunit;
@@ -28,6 +26,25 @@ namespace Swashbuckle.AspNetCore.Cli.Test
         {
             string[] args = ["tofile", "--output", "swagger.json", "--openapiversion", "2.0", "./does_not_exist.dll", "v1"];
             Assert.Throws<FileNotFoundException>(() => Program.Main(args));
+        }
+
+        [Theory]
+        [InlineData("a")]
+        [InlineData("1.9")]
+        [InlineData("3.2")]
+        public static void Error_When_OpenApiVersion_Is_Not_Supported(string version)
+        {
+            string[] args =
+            [
+                "tofile",
+                "--output",
+                "swagger.json",
+                "--openapiversion",
+                version,
+                Path.Combine(Directory.GetCurrentDirectory(), "Basic.dll"),
+                "v1"
+            ];
+            Assert.NotEqual(0, Program.Main(args));
         }
 
         [Fact]

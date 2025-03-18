@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.ComponentModel.DataAnnotations;
 using System.Dynamic;
-using System.Linq;
 using System.Net;
 using System.Reflection;
 using System.Text.Json;
@@ -18,7 +15,8 @@ using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen.Test.Fixtures;
 using Swashbuckle.AspNetCore.TestSupport;
-using Xunit;
+
+using JsonSchemaType = string;
 
 #if NET10_0_OR_GREATER
 using JsonSchemaType = Microsoft.OpenApi.Models.JsonSchemaType;

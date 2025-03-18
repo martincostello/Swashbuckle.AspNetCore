@@ -1,5 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
@@ -13,18 +11,6 @@ namespace Swashbuckle.AspNetCore.Swagger
             PreSerializeFilters = [];
             OpenApiVersion = OpenApiSpecVersion.OpenApi3_0;
         }
-
-#if !NET10_0_OR_GREATER
-        /// <summary>
-        /// Return Swagger JSON in the V2.0 format rather than V3.0.
-        /// </summary>
-        [Obsolete($"Use {nameof(OpenApiVersion)} instead.")]
-        public bool SerializeAsV2
-        {
-            get => OpenApiVersion == OpenApiSpecVersion.OpenApi2_0;
-            set => OpenApiVersion = value ? OpenApiSpecVersion.OpenApi2_0 : OpenApiSpecVersion.OpenApi3_0;
-        }
-#endif
 
         /// <summary>
         /// Gets or sets the OpenAPI (Swagger) document version to use.

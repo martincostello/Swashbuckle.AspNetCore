@@ -1,5 +1,3 @@
-﻿using System;
-using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
 using Microsoft.OpenApi;
 using Microsoft.OpenApi.Models;
@@ -20,14 +18,6 @@ namespace Swashbuckle.AspNetCore.Swagger
         /// Sets a custom route for the Swagger JSON/YAML endpoint(s). Must include the {documentName} parameter
         /// </summary>
         public string RouteTemplate { get; set; } = DefaultRouteTemplate;
-
-#if !NET10_0_OR_GREATER
-        /// <summary>
-        /// Return Swagger JSON in the V2.0 format rather than V3.0.
-        /// </summary>
-        [Obsolete($"Use {nameof(OpenApiVersion)} instead.")]
-        public bool SerializeAsV2 { get; set; }
-#endif
 
         /// <summary>
         /// Gets or sets the OpenAPI (Swagger) document version to use.

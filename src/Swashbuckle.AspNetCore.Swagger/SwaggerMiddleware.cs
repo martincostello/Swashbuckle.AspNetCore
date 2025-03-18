@@ -1,7 +1,5 @@
 ﻿using System.Globalization;
-using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 #if !NETSTANDARD
@@ -94,7 +92,7 @@ namespace Swashbuckle.AspNetCore.Swagger
             }
             catch (UnknownSwaggerDocument)
             {
-                RespondWithNotFound(httpContext.Response);
+                httpContext.Response.StatusCode = 404;
             }
         }
 
@@ -135,11 +133,6 @@ namespace Swashbuckle.AspNetCore.Swagger
             return false;
         }
 
-        private static void RespondWithNotFound(HttpResponse response)
-        {
-            response.StatusCode = 404;
-        }
-
         private async Task RespondWithSwaggerJson(HttpResponse response, OpenApiDocument swagger)
         {
             string json;
@@ -148,7 +141,7 @@ namespace Swashbuckle.AspNetCore.Swagger
             {
                 var openApiWriter = new OpenApiJsonWriter(textWriter);
 
-                WriteOpenApiDocumentContent(response, swagger, openApiWriter);
+                SerializeDocument(swagger, openApiWriter);
 
                 json = textWriter.ToString();
             }
@@ -167,7 +160,7 @@ namespace Swashbuckle.AspNetCore.Swagger
             {
                 var openApiWriter = new OpenApiYamlWriter(textWriter);
 
-                WriteOpenApiDocumentContent(response, swagger, openApiWriter);
+                SerializeDocument(swagger, openApiWriter);
 
                 yaml = textWriter.ToString();
             }
@@ -178,32 +171,31 @@ namespace Swashbuckle.AspNetCore.Swagger
             await response.WriteAsync(yaml, UTF8WithoutBom);
         }
 
-        private void WriteOpenApiDocumentContent(
-            HttpResponse response,
-            OpenApiDocument swagger,
-            OpenApiWriterBase openApiWriter)
+        private void SerializeDocument(
+            OpenApiDocument document,
+            IOpenApiWriter writer)
         {
             if (_options.CustomDocumentSerializer != null)
             {
-                _options.CustomDocumentSerializer.SerializeDocument(swagger, openApiWriter, _options.OpenApiVersion);
+                _options.CustomDocumentSerializer.SerializeDocument(document, writer, _options.OpenApiVersion);
             }
             else
             {
                 switch (_options.OpenApiVersion)
                 {
                     case Microsoft.OpenApi.OpenApiSpecVersion.OpenApi2_0:
-                        swagger.SerializeAsV2(openApiWriter);
+                        document.SerializeAsV2(writer);
                         break;
 
 #if NET10_0_OR_GREATER
                     case Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_1:
-                        swagger.SerializeAsV31(openApiWriter);
+                        document.SerializeAsV31(writer);
                         break;
 #endif
 
                     case Microsoft.OpenApi.OpenApiSpecVersion.OpenApi3_0:
                     default:
-                        swagger.SerializeAsV3(openApiWriter);
+                        document.SerializeAsV3(writer);
                         break;
                 }
             }

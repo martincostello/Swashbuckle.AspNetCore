@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Microsoft.OpenApi.Models;
 #if NET10_0_OR_GREATER
 using Microsoft.OpenApi.Reader;

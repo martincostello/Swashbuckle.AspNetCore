@@ -1,6 +1,4 @@
-﻿using System;
 using System.Globalization;
-using System.IO;
 using System.Xml.XPath;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.TestSupport;
@@ -11,6 +9,8 @@ using JsonSchemaType = Microsoft.OpenApi.Models.JsonSchemaType;
 #else
 using JsonSchemaType = string;
 #endif
+
+using JsonSchemaType = string;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test
 {

@@ -12,10 +12,7 @@
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <EnablePackageValidation>$(IsPackable)</EnablePackageValidation>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
-    <!--
-    TODO Go through the code and tidy up the usings
     <ImplicitUsings>enable</ImplicitUsings>
-    -->
     <IncludeSymbols>true</IncludeSymbols>
     <LangVersion>latest</LangVersion>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
@@ -37,7 +34,7 @@
     <PackageReadmeFile>package-readme.md</PackageReadmeFile>
     <PackageReleaseNotes>See $(PackageProjectUrl)/releases for details.</PackageReleaseNotes>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-    <PackageValidationBaselineVersion>7.3.1</PackageValidationBaselineVersion>
+    <PackageValidationBaselineVersion>8.0.0</PackageValidationBaselineVersion>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryUrl>$(PackageProjectUrl).git</RepositoryUrl>
