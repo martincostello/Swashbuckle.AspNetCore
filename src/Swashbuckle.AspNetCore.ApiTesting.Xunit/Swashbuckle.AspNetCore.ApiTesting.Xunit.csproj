@@ -7,7 +7,8 @@
     <IsTestProject>false</IsTestProject>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <PackageTags>swagger;openapi;test-first;spec-first;testing;aspnetcore;xunit</PackageTags>
-    <TargetFrameworks>net10.0;net9.0;net8.0;netstandard2.0</TargetFrameworks>
+    <!-- HACK For now, only support .NET 10 and Microsoft.OpenApi v2 due to volume of breaking changes -->
+    <TargetFrameworks>net10.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -23,7 +24,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
+    -->
     <AdditionalFiles Include="PublicAPI\PublicAPI.Shipped.txt" />
     <AdditionalFiles Include="PublicAPI\PublicAPI.Unshipped.txt" />
   </ItemGroup>

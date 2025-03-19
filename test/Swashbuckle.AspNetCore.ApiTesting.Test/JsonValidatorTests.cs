@@ -1,4 +1,6 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
+using Microsoft.OpenApi.Models.References;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
@@ -455,9 +457,9 @@ namespace Swashbuckle.AspNetCore.ApiTesting.Test
             var openApiSchema = new OpenApiSchema
             {
                 Type = JsonSchemaTypes.Object,
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
-                    [ "id" ] = new OpenApiSchema { Type = propertySchemaType }
+                    ["id"] = new OpenApiSchema { Type = propertySchemaType }
                 }
             };
             var instance = JToken.Parse(instanceText);
@@ -626,15 +628,12 @@ namespace Swashbuckle.AspNetCore.ApiTesting.Test
             string referenceId,
             string expectedExceptionMessage)
         {
-            var openApiSchema = new OpenApiSchema
-            {
-                Reference = new OpenApiReference { Type = ReferenceType.Schema, Id = referenceId }
-            };
+            var openApiSchema = new OpenApiSchemaReference(referenceId);
             var openApiDocument = new OpenApiDocument
             {
                 Components = new OpenApiComponents
                 {
-                    Schemas = new Dictionary<string, OpenApiSchema>
+                    Schemas = new Dictionary<string, IOpenApiSchema>
                     {
                         ["ref"] = new OpenApiSchema { Type = JsonSchemaTypes.Number }
                     }

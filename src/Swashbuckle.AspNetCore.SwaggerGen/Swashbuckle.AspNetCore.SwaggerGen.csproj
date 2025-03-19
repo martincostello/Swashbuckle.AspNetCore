@@ -38,6 +38,7 @@
 
   <ItemGroup>
     <Compile Include="..\Shared\JsonSchemaTypes.cs" Link="JsonSchemaTypes.cs" />
+    <Compile Include="..\Shared\OpenApiSchemaExtensions.cs" Link="OpenApiSchemaExtensions.cs" />
   </ItemGroup>
 
 </Project>

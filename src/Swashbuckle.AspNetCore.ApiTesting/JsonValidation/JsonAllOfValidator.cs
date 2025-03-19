@@ -1,34 +1,35 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 using Newtonsoft.Json.Linq;
 
-namespace Swashbuckle.AspNetCore.ApiTesting
+namespace Swashbuckle.AspNetCore.ApiTesting;
+
+public sealed class JsonAllOfValidator(JsonValidator jsonValidator) : IJsonValidator
 {
-    public sealed class JsonAllOfValidator(JsonValidator jsonValidator) : IJsonValidator
+    private readonly JsonValidator _jsonValidator = jsonValidator;
+
+    public bool CanValidate(IOpenApiSchema schema) => schema.AllOf != null && schema.AllOf.Any();
+
+    public bool Validate(
+        IOpenApiSchema schema,
+        OpenApiDocument openApiDocument,
+        JToken instance,
+        out IEnumerable<string> errorMessages)
     {
-        private readonly JsonValidator _jsonValidator = jsonValidator;
+        var errors = new List<string>();
 
-        public bool CanValidate(OpenApiSchema schema) => schema.AllOf != null && schema.AllOf.Any();
-
-        public bool Validate(
-            OpenApiSchema schema,
-            OpenApiDocument openApiDocument,
-            JToken instance,
-            out IEnumerable<string> errorMessages)
+        if (schema.AllOf is { Count: > 0 } allOf)
         {
-            var errorMessagesList = new List<string>();
-
-            var allOfArray = schema.AllOf.ToArray();
-
-            for (int i = 0; i < allOfArray.Length; i++)
+            for (int i = 0; i < allOf.Count; i++)
             {
-                if (!_jsonValidator.Validate(allOfArray[i], openApiDocument, instance, out IEnumerable<string> subErrorMessages))
+                if (!_jsonValidator.Validate(allOf[i], openApiDocument, instance, out IEnumerable<string> subErrorMessages))
                 {
-                    errorMessagesList.AddRange(subErrorMessages.Select(msg => $"{msg} (allOf[{i}])"));
+                    errors.AddRange(subErrorMessages.Select(msg => $"{msg} (allOf[{i}])"));
                 }
             }
-
-            errorMessages = errorMessagesList;
-            return !errorMessages.Any();
         }
+
+        errorMessages = errors;
+        return !errorMessages.Any();
     }
 }

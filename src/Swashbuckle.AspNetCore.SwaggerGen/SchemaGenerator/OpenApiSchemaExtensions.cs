@@ -115,12 +115,14 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         public static string ResolveType(this OpenApiSchema schema, SchemaRepository schemaRepository)
 #endif
         {
-            if (schema.Reference != null && schemaRepository.Schemas.TryGetValue(schema.Reference.Id, out OpenApiSchema definitionSchema))
+            if (schema.TryResolveReference() is { Length: > 0} referenceId &&
+                schemaRepository.Schemas.TryGetValue(referenceId, out OpenApiSchema definitionSchema))
             {
                 return definitionSchema.ResolveType(schemaRepository);
             }
 
-            foreach (var subSchema in schema.AllOf)
+            // TODO What about OpenApiSchemaReference?
+            foreach (var subSchema in schema.AllOf.OfType<OpenApiSchema>())
             {
                 var type = subSchema.ResolveType(schemaRepository);
                 if (type != null)

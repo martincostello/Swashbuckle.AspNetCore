@@ -1,48 +1,48 @@
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 
-namespace Swashbuckle.AspNetCore.ApiTesting
+namespace Swashbuckle.AspNetCore.ApiTesting;
+
+internal static class OpenApiDocumentExtensions
 {
-    public static class OpenApiDocumentExtensions
+    internal static bool TryFindOperationById(
+        this OpenApiDocument openApiDocument,
+        string operationId,
+        out string pathTemplate,
+        out OperationType operationType)
     {
-        internal static bool TryFindOperationById(
-            this OpenApiDocument openApiDocument,
-            string operationId,
-            out string pathTemplate,
-            out OperationType operationType)
+        foreach (var pathEntry in openApiDocument.Paths ?? [])
         {
-            foreach (var pathEntry in openApiDocument.Paths ?? new OpenApiPaths())
-            {
-                var pathItem = pathEntry.Value;
+            var pathItem = pathEntry.Value;
 
-                foreach (var operationEntry in pathItem.Operations)
+            foreach (var operationEntry in pathItem.Operations)
+            {
+                if (operationEntry.Value.OperationId == operationId)
                 {
-                    if (operationEntry.Value.OperationId == operationId)
-                    {
-                        pathTemplate = pathEntry.Key;
-                        operationType = operationEntry.Key;
-                        return true;
-                    }
+                    pathTemplate = pathEntry.Key;
+                    operationType = operationEntry.Key;
+                    return true;
                 }
             }
-
-            pathTemplate = null;
-            operationType = default(OperationType);
-            return false;
         }
 
-        internal static OpenApiOperation GetOperationByPathAndType(
-            this OpenApiDocument openApiDocument,
-            string pathTemplate,
-            OperationType operationType,
-            out OpenApiPathItem pathSpec)
+        pathTemplate = null;
+        operationType = default;
+        return false;
+    }
+
+    internal static OpenApiOperation GetOperationByPathAndType(
+        this OpenApiDocument openApiDocument,
+        string pathTemplate,
+        OperationType operationType,
+        out IOpenApiPathItem pathSpec)
+    {
+        if (openApiDocument.Paths.TryGetValue(pathTemplate, out pathSpec) &&
+            pathSpec.Operations.TryGetValue(operationType, out var type))
         {
-            if (openApiDocument.Paths.TryGetValue(pathTemplate, out pathSpec))
-            {
-                if (pathSpec.Operations.TryGetValue(operationType, out var type))
-                    return type;
-            }
-
-            throw new InvalidOperationException($"Operation with path '{pathTemplate}' and type '{operationType}' not found");
+            return type;
         }
+
+        throw new InvalidOperationException($"Operation with path '{pathTemplate}' and type '{operationType}' not found");
     }
 }

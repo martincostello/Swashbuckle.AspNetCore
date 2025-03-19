@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
+
 #if NET10_0_OR_GREATER
 using Microsoft.OpenApi.Models.References;
 #endif
@@ -20,7 +22,7 @@ namespace Swashbuckle.AspNetCore.ApiTesting
             string pathTemplate,
             OperationType operationType)
         {
-            var operationSpec = openApiDocument.GetOperationByPathAndType(pathTemplate, operationType, out OpenApiPathItem pathSpec);
+            var operationSpec = openApiDocument.GetOperationByPathAndType(pathTemplate, operationType, out var pathSpec);
             var parameterSpecs = ExpandParameterSpecs(pathSpec, operationSpec, openApiDocument);
 
             // Convert to absolute Uri as a workaround to limitation with Uri class - i.e. most of it's methods are not supported for relative Uri's.
@@ -46,8 +48,8 @@ namespace Swashbuckle.AspNetCore.ApiTesting
             }
         }
 
-        private static IEnumerable<OpenApiParameter> ExpandParameterSpecs(
-            OpenApiPathItem pathSpec,
+        private static IEnumerable<IOpenApiParameter> ExpandParameterSpecs(
+            IOpenApiPathItem pathSpec,
             OpenApiOperation operationSpec,
             OpenApiDocument openApiDocument)
         {
@@ -58,13 +60,14 @@ namespace Swashbuckle.AspNetCore.ApiTesting
                 .Concat(operationSpec.Parameters)
                 .Select(p =>
                 {
-                    return p.Reference != null ?
-#if NET10_0_OR_GREATER
-                        new OpenApiParameterReference(p.Reference.Id, openApiDocument)
-#else
-                        (OpenApiParameter)openApiDocument.ResolveReference(p.Reference)
-#endif
-                        : p;
+                    IOpenApiParameter parameter = p;
+
+                    if (parameter is OpenApiParameterReference reference)
+                    {
+                        parameter = new OpenApiParameterReference(reference.Reference.Id, openApiDocument);
+                    }
+
+                    return parameter;
                 });
         }
 
@@ -97,7 +100,7 @@ namespace Swashbuckle.AspNetCore.ApiTesting
 
 
         private static void ValidateParameters(
-            IEnumerable<OpenApiParameter> parameterSpecs,
+            IEnumerable<IOpenApiParameter> parameterSpecs,
             OpenApiDocument openApiDocument,
             NameValueCollection parameterNameValues)
         {
@@ -115,30 +118,27 @@ namespace Swashbuckle.AspNetCore.ApiTesting
                     continue;
                 }
 
-                var schema = (parameterSpec.Schema.Reference != null) ?
-#if NET10_0_OR_GREATER
-                    new OpenApiSchemaReference(parameterSpec.Schema.Reference.Id, openApiDocument)
-#else
-                    (OpenApiSchema)openApiDocument.ResolveReference(parameterSpec.Schema.Reference)
-#endif
-                    : parameterSpec.Schema;
+                IOpenApiSchema schema = parameterSpec.Schema;
 
-                if (!schema.TryParse(value, out object typedValue))
+                if (parameterSpec.Schema is OpenApiSchemaReference schemaRef)
                 {
-                    throw new RequestDoesNotMatchSpecException($"Parameter '{parameterSpec.Name}' is not of type '{parameterSpec.Schema.TypeIdentifier()}'");
+                    schema = new OpenApiSchemaReference(schemaRef.Reference.Id, openApiDocument);
+                }
+
+                // TODO This isn't right
+                if (schema is OpenApiSchema s && !s.TryParse(value, out object typedValue))
+                {
+                    throw new RequestDoesNotMatchSpecException($"Parameter '{parameterSpec.Name}' is not of type '{s.TypeIdentifier()}'");
                 }
             }
         }
 
-        private void ValidateContent(OpenApiRequestBody requestBodySpec, OpenApiDocument openApiDocument, HttpContent content)
+        private void ValidateContent(IOpenApiRequestBody requestBodySpec, OpenApiDocument openApiDocument, HttpContent content)
         {
-            requestBodySpec = requestBodySpec.Reference != null ?
-#if NET10_0_OR_GREATER
-                new OpenApiRequestBodyReference(requestBodySpec.Reference.Id, openApiDocument)
-#else
-                (OpenApiRequestBody)openApiDocument.ResolveReference(requestBodySpec.Reference)
-#endif
-                : requestBodySpec;
+            if (requestBodySpec is OpenApiSchemaReference schemaRef)
+            {
+                requestBodySpec = new OpenApiRequestBodyReference(schemaRef.Reference.Id, openApiDocument);
+            }
 
             if (requestBodySpec.Required && content == null)
             {
