@@ -1,7 +1,8 @@
-﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
-using System.Reflection;
+﻿using System.Reflection;
 using System.Xml.XPath;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
 {
@@ -21,15 +22,20 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             _options = options;
         }
 
-        public void Apply(OpenApiParameter parameter, ParameterFilterContext context)
+        public void Apply(IOpenApiParameter parameter, ParameterFilterContext context)
         {
+            if (parameter is not OpenApiParameter concrete)
+            {
+                return;
+            }
+
             if (context.PropertyInfo != null)
             {
-                ApplyPropertyTags(parameter, context);
+                ApplyPropertyTags(concrete, context);
             }
             else if (context.ParameterInfo != null)
             {
-                ApplyParamTags(parameter, context);
+                ApplyParamTags(concrete, context);
             }
         }
 
@@ -37,7 +43,10 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         {
             var propertyMemberName = XmlCommentsNodeNameHelper.GetMemberNameForFieldOrProperty(context.PropertyInfo);
 
-            if (!_xmlDocMembers.TryGetValue(propertyMemberName, out var propertyNode)) return;
+            if (!_xmlDocMembers.TryGetValue(propertyMemberName, out var propertyNode))
+            {
+                return;
+            }
 
             var summaryNode = propertyNode.SelectFirstChild("summary");
             if (summaryNode != null)
@@ -47,14 +56,20 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             }
 
             var exampleNode = propertyNode.SelectFirstChild("example");
-            if (exampleNode == null) return;
+            if (exampleNode == null)
+            {
+                return;
+            }
 
             parameter.Example = XmlCommentsExampleHelper.Create(context.SchemaRepository, parameter.Schema, exampleNode.ToString());
         }
 
         private void ApplyParamTags(OpenApiParameter parameter, ParameterFilterContext context)
         {
-            if (!(context.ParameterInfo.Member is MethodInfo methodInfo)) return;
+            if (context.ParameterInfo.Member is not MethodInfo methodInfo || parameter is not OpenApiParameter concrete)
+            {
+                return;
+            }
 
             // If method is from a constructed generic type, look for comments from the generic type method
             var targetMethod = methodInfo.DeclaringType.IsConstructedGenericType
@@ -65,7 +80,10 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
 
             var methodMemberName = XmlCommentsNodeNameHelper.GetMemberNameForMethod(targetMethod);
 
-            if (!_xmlDocMembers.TryGetValue(methodMemberName, out var propertyNode)) return;
+            if (!_xmlDocMembers.TryGetValue(methodMemberName, out var propertyNode))
+            {
+                return;
+            }
 
             XPathNavigator paramNode = propertyNode.SelectFirstChildWithAttribute("param", "name", context.ParameterInfo.Name);
 
@@ -74,9 +92,12 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 parameter.Description = XmlCommentsTextHelper.Humanize(paramNode.InnerXml, _options?.XmlCommentEndOfLine);
 
                 var example = paramNode.GetAttribute("example");
-                if (string.IsNullOrEmpty(example)) return;
+                if (string.IsNullOrEmpty(example))
+                {
+                    return;
+                }
 
-                parameter.Example = XmlCommentsExampleHelper.Create(context.SchemaRepository, parameter.Schema, example);
+                concrete.Example = XmlCommentsExampleHelper.Create(context.SchemaRepository, parameter.Schema, example);
             }
         }
     }

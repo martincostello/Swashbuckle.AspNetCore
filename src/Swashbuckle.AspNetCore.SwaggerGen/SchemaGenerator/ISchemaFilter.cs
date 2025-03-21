@@ -1,39 +1,29 @@
 ﻿using System.Reflection;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 
-namespace Swashbuckle.AspNetCore.SwaggerGen
+namespace Swashbuckle.AspNetCore.SwaggerGen;
+
+public interface ISchemaFilter
 {
-    public interface ISchemaFilter
-    {
-        void Apply(OpenApiSchema schema, SchemaFilterContext context);
-    }
+    void Apply(IOpenApiSchema schema, SchemaFilterContext context);
+}
 
-    public class SchemaFilterContext
-    {
-        public SchemaFilterContext(
-            Type type,
-            ISchemaGenerator schemaGenerator,
-            SchemaRepository schemaRepository,
-            MemberInfo memberInfo = null,
-            ParameterInfo parameterInfo = null)
-        {
-            Type = type;
-            SchemaGenerator = schemaGenerator;
-            SchemaRepository = schemaRepository;
-            MemberInfo = memberInfo;
-            ParameterInfo = parameterInfo;
-        }
+public class SchemaFilterContext(
+    Type type,
+    ISchemaGenerator schemaGenerator,
+    SchemaRepository schemaRepository,
+    MemberInfo memberInfo = null,
+    ParameterInfo parameterInfo = null)
+{
+    public Type Type { get; } = type;
 
-        public Type Type { get; }
+    public ISchemaGenerator SchemaGenerator { get; } = schemaGenerator;
 
-        public ISchemaGenerator SchemaGenerator { get; }
+    public SchemaRepository SchemaRepository { get; } = schemaRepository;
 
-        public SchemaRepository SchemaRepository { get; }
+    public MemberInfo MemberInfo { get; } = memberInfo;
 
-        public MemberInfo MemberInfo { get; }
+    public ParameterInfo ParameterInfo { get; } = parameterInfo;
 
-        public ParameterInfo ParameterInfo { get; }
-
-        public string DocumentName => SchemaRepository.DocumentName;
-    }
+    public string DocumentName => SchemaRepository.DocumentName;
 }

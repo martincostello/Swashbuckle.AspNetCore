@@ -5,10 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Routing.Template;
 using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Models.Interfaces;
-
-#if NET10_0_OR_GREATER
 using Microsoft.OpenApi.Models.References;
-#endif
 
 namespace Swashbuckle.AspNetCore.ApiTesting
 {

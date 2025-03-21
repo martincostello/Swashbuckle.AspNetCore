@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.OpenApi.Models.Interfaces;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
 {
@@ -20,17 +21,17 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             PathGroupSelector = DefaultPathGroupSelector;
             SecuritySchemesSelector = null;
             SchemaComparer = StringComparer.Ordinal;
-            Servers = new List<OpenApiServer>();
-            SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>();
-            SecurityRequirements = new List<OpenApiSecurityRequirement>();
-            ParameterFilters = new List<IParameterFilter>();
-            ParameterAsyncFilters = new List<IParameterAsyncFilter>();
-            RequestBodyFilters = new List<IRequestBodyFilter>();
-            RequestBodyAsyncFilters = new List<IRequestBodyAsyncFilter>();
-            OperationFilters = new List<IOperationFilter>();
-            OperationAsyncFilters = new List<IOperationAsyncFilter>();
-            DocumentFilters = new List<IDocumentFilter>();
-            DocumentAsyncFilters = new List<IDocumentAsyncFilter>();
+            Servers = [];
+            SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>();
+            SecurityRequirements = [];
+            ParameterFilters = [];
+            ParameterAsyncFilters = [];
+            RequestBodyFilters = [];
+            RequestBodyAsyncFilters = [];
+            OperationFilters = [];
+            OperationAsyncFilters = [];
+            DocumentFilters = [];
+            DocumentAsyncFilters = [];
         }
 
         public IDictionary<string, OpenApiInfo> SwaggerDocs { get; set; }
@@ -51,13 +52,13 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
 
         public bool InferSecuritySchemes { get; set; }
 
-        public Func<IEnumerable<AuthenticationScheme>, IDictionary<string, OpenApiSecurityScheme>> SecuritySchemesSelector { get; set; }
+        public Func<IEnumerable<AuthenticationScheme>, IDictionary<string, IOpenApiSecurityScheme>> SecuritySchemesSelector { get; set; }
 
         public bool DescribeAllParametersInCamelCase { get; set; }
 
         public List<OpenApiServer> Servers { get; set; }
 
-        public IDictionary<string, OpenApiSecurityScheme> SecuritySchemes { get; set; }
+        public IDictionary<string, IOpenApiSecurityScheme> SecuritySchemes { get; set; }
 
         public IList<OpenApiSecurityRequirement> SecurityRequirements { get; set; }
 
@@ -94,7 +95,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             // endpoint name if no route name is available. This allows us to
             // generate operation IDs for endpoints that are defined using
             // minimal APIs.
-#if (!NETSTANDARD2_0)
+#if !NETSTANDARD2_0
             return
                 actionDescriptor.AttributeRouteInfo?.Name
                 ?? (actionDescriptor.EndpointMetadata?.LastOrDefault(m => m is IEndpointNameMetadata) as IEndpointNameMetadata)?.EndpointName;
@@ -105,16 +106,15 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
 
         private IList<string> DefaultTagsSelector(ApiDescription apiDescription)
         {
-#if (!NET6_0_OR_GREATER)
-            return new[] { apiDescription.ActionDescriptor.RouteValues["controller"] };
+#if !NET6_0_OR_GREATER
+            return [apiDescription.ActionDescriptor.RouteValues["controller"]];
 #else
             var actionDescriptor = apiDescription.ActionDescriptor;
-            var tagsMetadata = actionDescriptor.EndpointMetadata?.LastOrDefault(m => m is ITagsMetadata) as ITagsMetadata;
-            if (tagsMetadata != null)
+            if (actionDescriptor.EndpointMetadata?.LastOrDefault(m => m is ITagsMetadata) is ITagsMetadata tagsMetadata)
             {
-                return new List<string>(tagsMetadata.Tags);
+                return [.. tagsMetadata.Tags];
             }
-            return new[] { apiDescription.ActionDescriptor.RouteValues["controller"] };
+            return [apiDescription.ActionDescriptor.RouteValues["controller"]];
 #endif
         }
 

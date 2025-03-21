@@ -1,17 +1,17 @@
 ﻿using System.Reflection;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
 {
     public interface IParameterFilter
     {
-        void Apply(OpenApiParameter parameter, ParameterFilterContext context);
+        void Apply(IOpenApiParameter parameter, ParameterFilterContext context);
     }
 
     public interface IParameterAsyncFilter
     {
-        Task ApplyAsync(OpenApiParameter parameter, ParameterFilterContext context, CancellationToken cancellationToken);
+        Task ApplyAsync(IOpenApiParameter parameter, ParameterFilterContext context, CancellationToken cancellationToken);
     }
 
     public class ParameterFilterContext

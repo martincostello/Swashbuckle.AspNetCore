@@ -4,12 +4,6 @@ using Microsoft.OpenApi.Models.References;
 using Newtonsoft.Json.Linq;
 using Xunit;
 
-#if NET10_0_OR_GREATER
-using JsonSchemaType = Microsoft.OpenApi.Models.JsonSchemaType;
-#else
-using JsonSchemaType = string;
-#endif
-
 namespace Swashbuckle.AspNetCore.ApiTesting.Test
 {
     public class JsonValidatorTests

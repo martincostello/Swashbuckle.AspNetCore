@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 using AnnotationsDataType = System.ComponentModel.DataAnnotations.DataType;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
@@ -29,43 +30,48 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             [AnnotationsDataType.Upload] = "binary",
         };
 
-        public static void ApplyValidationAttributes(this OpenApiSchema schema, IEnumerable<object> customAttributes)
+        public static void ApplyValidationAttributes(this IOpenApiSchema schema, IEnumerable<object> customAttributes)
         {
+            if (schema is not OpenApiSchema concrete)
+            {
+                return;
+            }
+
             foreach (var attribute in customAttributes)
             {
                 if (attribute is DataTypeAttribute dataTypeAttribute)
-                    ApplyDataTypeAttribute(schema, dataTypeAttribute);
+                    ApplyDataTypeAttribute(concrete, dataTypeAttribute);
 
                 else if (attribute is MinLengthAttribute minLengthAttribute)
-                    ApplyMinLengthAttribute(schema, minLengthAttribute);
+                    ApplyMinLengthAttribute(concrete, minLengthAttribute);
 
                 else if (attribute is MaxLengthAttribute maxLengthAttribute)
-                    ApplyMaxLengthAttribute(schema, maxLengthAttribute);
+                    ApplyMaxLengthAttribute(concrete, maxLengthAttribute);
 
 #if NET8_0_OR_GREATER
 
                 else if (attribute is LengthAttribute lengthAttribute)
-                    ApplyLengthAttribute(schema, lengthAttribute);
+                    ApplyLengthAttribute(concrete, lengthAttribute);
 
                 else if (attribute is Base64StringAttribute base64Attribute)
-                    ApplyBase64Attribute(schema);
+                    ApplyBase64Attribute(concrete);
 
 #endif
 
                 else if (attribute is RangeAttribute rangeAttribute)
-                    ApplyRangeAttribute(schema, rangeAttribute);
+                    ApplyRangeAttribute(concrete, rangeAttribute);
 
                 else if (attribute is RegularExpressionAttribute regularExpressionAttribute)
-                    ApplyRegularExpressionAttribute(schema, regularExpressionAttribute);
+                    ApplyRegularExpressionAttribute(concrete, regularExpressionAttribute);
 
                 else if (attribute is StringLengthAttribute stringLengthAttribute)
-                    ApplyStringLengthAttribute(schema, stringLengthAttribute);
+                    ApplyStringLengthAttribute(concrete, stringLengthAttribute);
 
                 else if (attribute is ReadOnlyAttribute readOnlyAttribute)
-                    ApplyReadOnlyAttribute(schema, readOnlyAttribute);
+                    ApplyReadOnlyAttribute(concrete, readOnlyAttribute);
 
                 else if (attribute is DescriptionAttribute descriptionAttribute)
-                    ApplyDescriptionAttribute(schema, descriptionAttribute);
+                    ApplyDescriptionAttribute(concrete, descriptionAttribute);
 
             }
         }
@@ -109,16 +115,12 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             }
         }
 
-#if NET10_0_OR_GREATER
         public static JsonSchemaType? ResolveType(this OpenApiSchema schema, SchemaRepository schemaRepository)
-#else
-        public static string ResolveType(this OpenApiSchema schema, SchemaRepository schemaRepository)
-#endif
         {
-            if (schema.TryResolveReference() is { Length: > 0} referenceId &&
-                schemaRepository.Schemas.TryGetValue(referenceId, out OpenApiSchema definitionSchema))
+            if (schema.TryResolveReference() is { Length: > 0 } referenceId &&
+                schemaRepository.Schemas.TryGetValue(referenceId, out var resolved))
             {
-                return definitionSchema.ResolveType(schemaRepository);
+                return resolved.GetSchema().ResolveType(schemaRepository);
             }
 
             // TODO What about OpenApiSchemaReference?

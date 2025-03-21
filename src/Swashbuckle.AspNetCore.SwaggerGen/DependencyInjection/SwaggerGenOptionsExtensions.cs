@@ -3,6 +3,7 @@ using System.Xml.XPath;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Microsoft.Extensions.DependencyInjection
@@ -327,7 +328,7 @@ namespace Microsoft.Extensions.DependencyInjection
         /// <remarks>Currently only supports JWT Bearer authentication</remarks>
         public static void InferSecuritySchemes(
             this SwaggerGenOptions swaggerGenOptions,
-            Func<IEnumerable<AuthenticationScheme>, IDictionary<string, OpenApiSecurityScheme>> securitySchemesSelector = null)
+            Func<IEnumerable<AuthenticationScheme>, IDictionary<string, IOpenApiSecurityScheme>> securitySchemesSelector = null)
         {
             swaggerGenOptions.SwaggerGeneratorOptions.InferSecuritySchemes = true;
             swaggerGenOptions.SwaggerGeneratorOptions.SecuritySchemesSelector = securitySchemesSelector;

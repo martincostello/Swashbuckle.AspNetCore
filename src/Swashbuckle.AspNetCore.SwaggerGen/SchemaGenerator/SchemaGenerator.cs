@@ -2,38 +2,24 @@
 using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
-using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
+using Microsoft.OpenApi.Models.References;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
 {
-    public class SchemaGenerator : ISchemaGenerator
+    public class SchemaGenerator(
+        SchemaGeneratorOptions generatorOptions,
+        ISerializerDataContractResolver serializerDataContractResolver) : ISchemaGenerator
     {
-        private readonly SchemaGeneratorOptions _generatorOptions;
-        private readonly ISerializerDataContractResolver _serializerDataContractResolver;
+        private readonly SchemaGeneratorOptions _generatorOptions = generatorOptions;
+        private readonly ISerializerDataContractResolver _serializerDataContractResolver  = serializerDataContractResolver;
 
-        public SchemaGenerator(
-            SchemaGeneratorOptions generatorOptions,
-            ISerializerDataContractResolver serializerDataContractResolver)
-        {
-            _generatorOptions = generatorOptions;
-            _serializerDataContractResolver = serializerDataContractResolver;
-        }
-
-        [Obsolete($"{nameof(IOptions<MvcOptions>)} is no longer used. This constructor will be removed in a future major release.")]
-        public SchemaGenerator(
-            SchemaGeneratorOptions generatorOptions,
-            ISerializerDataContractResolver serializerDataContractResolver,
-            IOptions<MvcOptions> mvcOptions)
-            : this(generatorOptions, serializerDataContractResolver)
-        {
-        }
-
-        public OpenApiSchema GenerateSchema(
+        public IOpenApiSchema GenerateSchema(
             Type modelType,
             SchemaRepository schemaRepository,
             MemberInfo memberInfo = null,
@@ -41,15 +27,19 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             ApiParameterRouteInfo routeInfo = null)
         {
             if (memberInfo != null)
+            {
                 return GenerateSchemaForMember(modelType, schemaRepository, memberInfo);
+            }
 
             if (parameterInfo != null)
+            {
                 return GenerateSchemaForParameter(modelType, schemaRepository, parameterInfo, routeInfo);
+            }
 
             return GenerateSchemaForType(modelType, schemaRepository);
         }
 
-        private OpenApiSchema GenerateSchemaForMember(
+        private IOpenApiSchema GenerateSchemaForMember(
             Type modelType,
             SchemaRepository schemaRepository,
             MemberInfo memberInfo,
@@ -61,74 +51,66 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 ? GeneratePolymorphicSchema(schemaRepository, knownTypesDataContracts)
                 : GenerateConcreteSchema(dataContract, schemaRepository);
 
-            if (_generatorOptions.UseAllOfToExtendReferenceSchemas && schema.Reference != null)
+            var customAttributes = memberInfo.GetInlineAndMetadataAttributes();
+
+            // Nullable, ReadOnly & WriteOnly are only relevant for Schema "properties" (i.e. where dataProperty is non-null)
+            if (dataProperty != null)
             {
-                schema.AllOf = [new OpenApiSchema { Reference = schema.Reference }];
-                schema.Reference = null;
+                var requiredAttribute = customAttributes.OfType<RequiredAttribute>().FirstOrDefault();
+
+                var nullable = _generatorOptions.SupportNonNullableReferenceTypes
+                    ? dataProperty.IsNullable && requiredAttribute == null && !memberInfo.IsNonNullableReferenceType()
+                    : dataProperty.IsNullable && requiredAttribute == null;
+
+                schema.SetNullable(nullable);
+
+                if (schema is OpenApiSchema s3)
+                {
+                    s3.ReadOnly = dataProperty.IsReadOnly;
+                    s3.WriteOnly = dataProperty.IsWriteOnly;
+                    s3.MinLength = modelType == typeof(string) && requiredAttribute is { AllowEmptyStrings: false } ? 1 : null;
+                }
             }
 
-            if (schema.Reference == null)
+            var defaultValueAttribute = customAttributes.OfType<DefaultValueAttribute>().FirstOrDefault();
+            if (defaultValueAttribute != null && schema is OpenApiSchema s)
             {
-                var customAttributes = memberInfo.GetInlineAndMetadataAttributes();
-
-                // Nullable, ReadOnly & WriteOnly are only relevant for Schema "properties" (i.e. where dataProperty is non-null)
-                if (dataProperty != null)
-                {
-                    var requiredAttribute = customAttributes.OfType<RequiredAttribute>().FirstOrDefault();
-
-                    schema.Nullable = _generatorOptions.SupportNonNullableReferenceTypes
-                        ? dataProperty.IsNullable && requiredAttribute == null && !memberInfo.IsNonNullableReferenceType()
-                        : dataProperty.IsNullable && requiredAttribute == null;
-
-                    schema.ReadOnly = dataProperty.IsReadOnly;
-                    schema.WriteOnly = dataProperty.IsWriteOnly;
-                    schema.MinLength = modelType == typeof(string) && requiredAttribute is { AllowEmptyStrings: false } ? 1 : null;
-                }
-
-                var defaultValueAttribute = customAttributes.OfType<DefaultValueAttribute>().FirstOrDefault();
-                if (defaultValueAttribute != null)
-                {
-                    schema.Default = GenerateDefaultValue(dataContract, modelType, defaultValueAttribute.Value);
-                }
-
-                var obsoleteAttribute = customAttributes.OfType<ObsoleteAttribute>().FirstOrDefault();
-                if (obsoleteAttribute != null)
-                {
-                    schema.Deprecated = true;
-                }
-
-                // NullableAttribute behaves differently for Dictionaries
-                if (schema.AdditionalPropertiesAllowed && modelType.IsGenericType)
-                {
-                    var genericTypes = modelType
-                        .GetInterfaces()
-#if NETSTANDARD2_0
-                        .Concat([modelType])
-#else
-                        .Append(modelType)
-#endif
-                        .Where(t => t.IsGenericType)
-                        .ToArray();
-
-                    var isDictionaryType =
-                        genericTypes.Any(t => t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
-                        genericTypes.Any(t => t.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
-
-                    if (isDictionaryType)
-                    {
-                        schema.AdditionalProperties.Nullable = !memberInfo.IsDictionaryValueNonNullable();
-                    }
-                }
-
-                schema.ApplyValidationAttributes(customAttributes);
-
-                ApplyFilters(schema, modelType, schemaRepository, memberInfo: memberInfo);
+                s.Default = GenerateDefaultValue(dataContract, modelType, defaultValueAttribute.Value);
             }
+
+            var obsoleteAttribute = customAttributes.OfType<ObsoleteAttribute>().FirstOrDefault();
+            if (obsoleteAttribute != null && schema is OpenApiSchema s2)
+            {
+                s2.Deprecated = true;
+            }
+
+            // NullableAttribute behaves differently for Dictionaries
+            if (schema.AdditionalPropertiesAllowed && modelType.IsGenericType)
+            {
+                var genericTypes = modelType
+                    .GetInterfaces()
+                    .Append(modelType)
+                    .Where(t => t.IsGenericType)
+                    .ToArray();
+
+                var isDictionaryType =
+                    genericTypes.Any(t => t.GetGenericTypeDefinition() == typeof(IDictionary<,>)) ||
+                    genericTypes.Any(t => t.GetGenericTypeDefinition() == typeof(IReadOnlyDictionary<,>));
+
+                if (isDictionaryType)
+                {
+                    schema.AdditionalProperties.SetNullable(!memberInfo.IsDictionaryValueNonNullable());
+                }
+            }
+
+            schema.ApplyValidationAttributes(customAttributes);
+
+            ApplyFilters(schema, modelType, schemaRepository, memberInfo: memberInfo);
 
             return schema;
         }
 
-        private OpenApiSchema GenerateSchemaForParameter(
+        private IOpenApiSchema GenerateSchemaForParameter(
             Type modelType,
             SchemaRepository schemaRepository,
             ParameterInfo parameterInfo,
@@ -140,38 +122,29 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 ? GeneratePolymorphicSchema(schemaRepository, knownTypesDataContracts)
                 : GenerateConcreteSchema(dataContract, schemaRepository);
 
-            if (_generatorOptions.UseAllOfToExtendReferenceSchemas && schema.Reference != null)
+            var customAttributes = parameterInfo.GetCustomAttributes();
+
+            var defaultValue = parameterInfo.HasDefaultValue
+                ? parameterInfo.DefaultValue
+                : customAttributes.OfType<DefaultValueAttribute>().FirstOrDefault()?.Value;
+
+            if (defaultValue != null)
             {
-                schema.AllOf = [new OpenApiSchema { Reference = schema.Reference }];
-                schema.Reference = null;
+                schema.Default = GenerateDefaultValue(dataContract, modelType, defaultValue);
             }
 
-            if (schema.Reference == null)
+            schema.ApplyValidationAttributes(customAttributes);
+            if (routeInfo != null)
             {
-                var customAttributes = parameterInfo.GetCustomAttributes();
-
-                var defaultValue = parameterInfo.HasDefaultValue
-                    ? parameterInfo.DefaultValue
-                    : customAttributes.OfType<DefaultValueAttribute>().FirstOrDefault()?.Value;
-
-                if (defaultValue != null)
-                {
-                    schema.Default = GenerateDefaultValue(dataContract, modelType, defaultValue);
-                }
-
-                schema.ApplyValidationAttributes(customAttributes);
-                if (routeInfo != null)
-                {
-                    schema.ApplyRouteConstraints(routeInfo);
-                }
-
-                ApplyFilters(schema, modelType, schemaRepository, parameterInfo: parameterInfo);
+                schema.ApplyRouteConstraints(routeInfo);
             }
+
+            ApplyFilters(schema, modelType, schemaRepository, parameterInfo: parameterInfo);
 
             return schema;
         }
 
-        private OpenApiSchema GenerateSchemaForType(Type modelType, SchemaRepository schemaRepository)
+        private IOpenApiSchema GenerateSchemaForType(Type modelType, SchemaRepository schemaRepository)
         {
             var dataContract = GetDataContractFor(modelType);
 
@@ -179,10 +152,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 ? GeneratePolymorphicSchema(schemaRepository, knownTypesDataContracts)
                 : GenerateConcreteSchema(dataContract, schemaRepository);
 
-            if (schema.Reference == null)
-            {
-                ApplyFilters(schema, modelType, schemaRepository);
-            }
+            ApplyFilters(schema, modelType, schemaRepository);
 
             return schema;
         }
@@ -206,7 +176,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 ? new[] { dataContract.UnderlyingType }.Union(subTypes)
                 : subTypes;
 
-            knownTypesDataContracts = knownTypes.Select(knownType => GetDataContractFor(knownType));
+            knownTypesDataContracts = knownTypes.Select(GetDataContractFor);
             return true;
         }
 
@@ -214,7 +184,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             SchemaRepository schemaRepository,
             IEnumerable<DataContract> knownTypesDataContracts)
         {
-            return new OpenApiSchema
+            return new()
             {
                 OneOf = [.. knownTypesDataContracts.Select(allowedTypeDataContract => GenerateConcreteSchema(allowedTypeDataContract, schemaRepository))]
             };
@@ -223,14 +193,14 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         private static readonly Type[] BinaryStringTypes =
         [
             typeof(IFormFile),
-            typeof(FileResult),
-            typeof(System.IO.Stream),
+            typeof(Stream),
 #if !NETSTANDARD
+            typeof(FileResult),
             typeof(System.IO.Pipelines.PipeReader),
 #endif
         ];
 
-        private OpenApiSchema GenerateConcreteSchema(DataContract dataContract, SchemaRepository schemaRepository)
+        private IOpenApiSchema GenerateConcreteSchema(DataContract dataContract, SchemaRepository schemaRepository)
         {
             if (TryGetCustomTypeMapping(dataContract.UnderlyingType, out Func<OpenApiSchema> customSchemaFactory))
             {
@@ -305,28 +275,13 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 Format = dataContract.DataFormat
             };
 
-#pragma warning disable CS0618 // Type or member is obsolete
-            // For backwards compatibility only - EnumValues is obsolete
-            if (dataContract.EnumValues != null)
-            {
-                schema.Enum = dataContract.EnumValues
-                    .Select(value => JsonSerializer.Serialize(value))
-                    .Distinct()
-                    .Select(JsonModelFactory.CreateFromJson)
-                    .ToList();
-
-                return schema;
-            }
-#pragma warning restore CS0618 // Type or member is obsolete
-
             if (dataContract.UnderlyingType.IsEnum)
             {
-                schema.Enum = dataContract.UnderlyingType.GetEnumValues()
+                schema.Enum = [.. dataContract.UnderlyingType.GetEnumValues()
                     .Cast<object>()
                     .Select(value => dataContract.JsonConverter(value))
                     .Distinct()
-                    .Select(JsonModelFactory.CreateFromJson)
-                    .ToList();
+                    .Select(JsonModelFactory.CreateFromJson)];
             }
 
             return schema;
@@ -375,7 +330,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             var schema = new OpenApiSchema
             {
                 Type = JsonSchemaTypes.Object,
-                Properties = new Dictionary<string, OpenApiSchema>(),
+                Properties = new Dictionary<string, IOpenApiSchema>(),
                 Required = new SortedSet<string>(),
                 AdditionalPropertiesAllowed = false
             };
@@ -438,7 +393,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                     dataProperty.IsRequired
                     || markNonNullableTypeAsRequired
                     || customAttributes.OfType<RequiredAttribute>().Any()
-#if NET7_0_OR_GREATER
+#if !NETSTANDARD2_0
                     || customAttributes.OfType<System.Runtime.CompilerServices.RequiredMemberAttribute>().Any()
 #endif
                     )
@@ -504,21 +459,26 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 var discriminatorValue = _generatorOptions.DiscriminatorValueSelector(knownTypeDataContract.UnderlyingType)
                     ?? knownTypeDataContract.ObjectTypeNameValue;
 
-                if (discriminatorValue == null) continue;
+                if (discriminatorValue == null)
+                {
+                    continue;
+                }
 
-                discriminator.Mapping.Add(discriminatorValue, GenerateConcreteSchema(knownTypeDataContract, schemaRepository).Reference.ReferenceV3);
+                GenerateConcreteSchema(knownTypeDataContract, schemaRepository);
             }
 
             return true;
         }
 
-        private OpenApiSchema GenerateReferencedSchema(
+        private IOpenApiSchema GenerateReferencedSchema(
             DataContract dataContract,
             SchemaRepository schemaRepository,
             Func<OpenApiSchema> definitionFactory)
         {
-            if (schemaRepository.TryLookupByType(dataContract.UnderlyingType, out OpenApiSchema referenceSchema))
+            if (schemaRepository.TryLookupByType(dataContract.UnderlyingType, out var referenceSchema))
+            {
                 return referenceSchema;
+            }
 
             var schemaId = _generatorOptions.SchemaIdSelector(dataContract.UnderlyingType);
 
@@ -531,7 +491,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         }
 
         private void ApplyFilters(
-            OpenApiSchema schema,
+            IOpenApiSchema schema,
             Type type,
             SchemaRepository schemaRepository,
             MemberInfo memberInfo = null,
@@ -550,11 +510,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             }
         }
 
-#if NET10_0_OR_GREATER
-        private System.Text.Json.Nodes.JsonNode GenerateDefaultValue(
-#else
-        private Microsoft.OpenApi.Any.IOpenApiAny GenerateDefaultValue(
-#endif
+        private JsonNode GenerateDefaultValue(
             DataContract dataContract,
             Type modelType,
             object defaultValue)
@@ -573,12 +529,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             return JsonModelFactory.CreateFromJson(defaultAsJson);
         }
 
-#if NET10_0_OR_GREATER
         private static JsonSchemaType FromDataType(DataType dataType)
             => Enum.Parse<JsonSchemaType>(dataType.ToString());
-#else
-        private static string FromDataType(DataType dataType)
-            => dataType.ToString().ToLower(System.Globalization.CultureInfo.InvariantCulture);
-#endif
     }
 }

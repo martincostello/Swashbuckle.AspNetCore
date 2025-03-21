@@ -11,12 +11,9 @@ using Swashbuckle.AspNetCore.Swagger;
 
 #if NET7_0_OR_GREATER
 using Microsoft.AspNetCore.Http.Metadata;
-#endif
+using Microsoft.OpenApi.Models.Interfaces;
+using Microsoft.OpenApi.Models.References;
 
-#if NET10_0
-using OpenApiTag = Microsoft.OpenApi.Models.References.OpenApiTagReference;
-#else
-using OpenApiTag = Microsoft.OpenApi.Models.OpenApiTag;
 #endif
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
@@ -106,11 +103,11 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             }
         }
 
-        public IList<string> GetDocumentNames() => _options.SwaggerDocs.Keys.ToList();
+        public IList<string> GetDocumentNames() => [.. _options.SwaggerDocs.Keys];
 
         private void SortSchemas(OpenApiDocument document)
         {
-            document.Components.Schemas = new SortedDictionary<string, OpenApiSchema>(document.Components.Schemas, _options.SchemaComparer);
+            document.Components.Schemas = new SortedDictionary<string, IOpenApiSchema>(document.Components.Schemas, _options.SchemaComparer);
         }
 
         private (DocumentFilterContext, OpenApiDocument) GetSwaggerDocumentWithoutPaths(string documentName, string host = null, string basePath = null)
@@ -140,17 +137,17 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 {
                     Schemas = schemaRepository.Schemas,
                 },
-                SecurityRequirements = new List<OpenApiSecurityRequirement>(_options.SecurityRequirements)
+                SecurityRequirements = [.. _options.SecurityRequirements]
             };
 
             return (new DocumentFilterContext(applicableApiDescriptions, _schemaGenerator, schemaRepository), swaggerDoc);
         }
 
-        private async Task<IDictionary<string, OpenApiSecurityScheme>> GetSecuritySchemesAsync()
+        private async Task<IDictionary<string, IOpenApiSecurityScheme>> GetSecuritySchemesAsync()
         {
             if (!_options.InferSecuritySchemes)
             {
-                return new Dictionary<string, OpenApiSecurityScheme>(_options.SecuritySchemes);
+                return new Dictionary<string, IOpenApiSecurityScheme>(_options.SecuritySchemes);
             }
 
             var authenticationSchemes = (_authenticationSchemeProvider is not null)
@@ -173,14 +170,14 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                         Scheme = "bearer", // "bearer" refers to the header name here
                         In = ParameterLocation.Header,
                         BearerFormat = "Json Web Token"
-                    });
+                    } as IOpenApiSecurityScheme);
         }
 
         private List<OpenApiServer> GenerateServers(string host, string basePath)
         {
             if (_options.Servers.Count > 0)
             {
-                return new List<OpenApiServer>(_options.Servers);
+                return [.. _options.Servers];
             }
 
             return (host == null && basePath == null)
@@ -312,7 +309,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             OpenApiDocument document,
             ApiDescription apiDescription,
             SchemaRepository schemaRepository,
-            Func<ApiDescription, SchemaRepository, Task<List<OpenApiParameter>>> parametersGenerator,
+            Func<ApiDescription, SchemaRepository, Task<List<IOpenApiParameter>>> parametersGenerator,
             Func<ApiDescription, SchemaRepository, Task<OpenApiRequestBody>> bodyGenerator,
             Func<OpenApiOperation, OperationFilterContext, Task> applyFilters)
         {
@@ -416,8 +413,13 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 if (apiParameter is not null)
                 {
                     var (parameterAndContext, filterContext) = GenerateParameterAndContext(apiParameter, schemaRepository);
-                    parameter.Name = parameterAndContext.Name;
-                    parameter.Schema = parameterAndContext.Schema;
+
+                    if (parameter is OpenApiParameter p)
+                    {
+                        p.Name = parameterAndContext.Name;
+                        p.Schema = parameterAndContext.Schema;
+                    }
+
                     parameter.Description ??= parameterAndContext.Description;
 
                     foreach (var filter in _options.ParameterAsyncFilters)
@@ -506,10 +508,10 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         }
 #endif
 
-        private List<OpenApiTag> GenerateOperationTags(OpenApiDocument document, ApiDescription apiDescription)
+        private List<OpenApiTagReference> GenerateOperationTags(OpenApiDocument document, ApiDescription apiDescription)
             => [.. _options.TagsSelector(apiDescription).Select(tagName => CreateTag(tagName, document))];
 
-        private static async Task<List<OpenApiParameter>> GenerateParametersAsync(
+        private static async Task<List<IOpenApiParameter>> GenerateParametersAsync(
             ApiDescription apiDescription,
             SchemaRepository schemaRespository,
             Func<ApiParameterDescription, SchemaRepository, Task<OpenApiParameter>> parameterGenerator)
@@ -532,7 +534,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                         && !apiParam.IsIllegalHeaderParameter();
                 });
 
-            var parameters = new List<OpenApiParameter>();
+            var parameters = new List<IOpenApiParameter>();
 
             foreach (var parameter in applicableApiParameters)
             {
@@ -542,7 +544,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             return parameters;
         }
 
-        private List<OpenApiParameter> GenerateParameters(ApiDescription apiDescription, SchemaRepository schemaRespository)
+        private List<IOpenApiParameter> GenerateParameters(ApiDescription apiDescription, SchemaRepository schemaRespository)
         {
             return GenerateParametersAsync(
                 apiDescription,
@@ -550,7 +552,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 (parameter, schemaRespository) => Task.FromResult(GenerateParameter(parameter, schemaRespository))).Result;
         }
 
-        private async Task<List<OpenApiParameter>> GenerateParametersAsync(
+        private async Task<List<IOpenApiParameter>> GenerateParametersAsync(
             ApiDescription apiDescription,
             SchemaRepository schemaRespository)
         {
@@ -596,8 +598,8 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
 
             var description = schema.Description;
             if (string.IsNullOrEmpty(description)
-                && !string.IsNullOrEmpty(schema?.Reference?.Id)
-                && schemaRepository.Schemas.TryGetValue(schema.Reference.Id, out var openApiSchema))
+                && schema?.TryResolveReference() is { Length: > 0 } referenceId
+                && schemaRepository.Schemas.TryGetValue(referenceId, out var openApiSchema))
             {
                 description = openApiSchema.Description;
             }
@@ -670,7 +672,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             return parameter;
         }
 
-        private OpenApiSchema GenerateSchema(
+        private IOpenApiSchema GenerateSchema(
             Type type,
             SchemaRepository schemaRepository,
             PropertyInfo propertyInfo = null,
@@ -845,13 +847,13 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             };
         }
 
-        private OpenApiSchema GenerateSchemaFromFormParameters(
+        private IOpenApiSchema GenerateSchemaFromFormParameters(
             IEnumerable<ApiParameterDescription> formParameters,
             SchemaRepository schemaRepository)
         {
-            var properties = new Dictionary<string, OpenApiSchema>();
+            var properties = new Dictionary<string, IOpenApiSchema>();
             var requiredPropertyNames = new List<string>();
-            var ownSchemas = new List<OpenApiSchema>();
+            var ownSchemas = new List<IOpenApiSchema>();
             foreach (var formParameter in formParameters)
             {
                 var propertyInfo = formParameter.PropertyInfo();
@@ -865,7 +867,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                         formParameter.ParameterInfo())
                     : new OpenApiSchema { Type = JsonSchemaTypes.String };
 
-                    if (schema.Reference is null
+                    if (schema is not OpenApiSchemaReference
                     || (formParameter.ModelMetadata?.ModelType is not null && (Nullable.GetUnderlyingType(formParameter.ModelMetadata.ModelType) ?? formParameter.ModelMetadata.ModelType).IsEnum))
                     {
                         var name = _options.DescribeAllParametersInCamelCase
@@ -904,7 +906,7 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
 
             return GenerateSchemaForProperties(properties, requiredPropertyNames);
 
-            static OpenApiSchema GenerateSchemaForProperties(Dictionary<string, OpenApiSchema> properties, List<string> requiredPropertyNames) =>
+            static OpenApiSchema GenerateSchemaForProperties(Dictionary<string, IOpenApiSchema> properties, List<string> requiredPropertyNames) =>
                  new()
                  {
                      Type = JsonSchemaTypes.Object,
@@ -1105,23 +1107,9 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 .LastOrDefault();
 #endif
 
-#if NET10_0_OR_GREATER
-        private static OpenApiTag CreateTag(string name, OpenApiDocument document)
+        private static OpenApiTagReference CreateTag(string name, OpenApiDocument document)
         {
-            // TODO Microsoft.OpenApi 2.0.0-preview5 has a bug that causes a
-            // NullReferenceException to be thrown when accessing a tag in some
-            // scenarios which breaks all the Verify tests. Remove ASP.NET Core
-            // 10 depends on a newer version of Microsoft.OpenApi that doesn't.
-            if (name is "Fake" or "Foo")
-            {
-                return null;
-            }
-
             return new(name, document);
         }
-#else
-        private static OpenApiTag CreateTag(string name, OpenApiDocument _) =>
-            new() { Name = name };
-#endif
     }
 }

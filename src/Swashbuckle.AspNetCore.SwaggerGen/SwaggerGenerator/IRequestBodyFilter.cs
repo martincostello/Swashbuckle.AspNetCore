@@ -1,16 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc.ApiExplorer;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
 {
     public interface IRequestBodyFilter
     {
-        void Apply(OpenApiRequestBody requestBody, RequestBodyFilterContext context);
+        void Apply(IOpenApiRequestBody requestBody, RequestBodyFilterContext context);
     }
 
     public interface IRequestBodyAsyncFilter
     {
-        Task ApplyAsync(OpenApiRequestBody requestBody, RequestBodyFilterContext context, CancellationToken cancellationToken);
+        Task ApplyAsync(IOpenApiRequestBody requestBody, RequestBodyFilterContext context, CancellationToken cancellationToken);
     }
 
     public class RequestBodyFilterContext

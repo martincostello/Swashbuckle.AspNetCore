@@ -4,12 +4,6 @@ using Microsoft.OpenApi.Models;
 using Microsoft.OpenApi.Models.Interfaces;
 using Xunit;
 
-#if NET10_0_OR_GREATER
-using JsonSchemaType = Microsoft.OpenApi.Models.JsonSchemaType;
-#else
-using JsonSchemaType = string;
-#endif
-
 namespace Swashbuckle.AspNetCore.ApiTesting.Test;
 
 public class ResponseValidatorTests
@@ -88,11 +82,7 @@ public class ResponseValidatorTests
         { "1", JsonSchemaTypes.Number, null, null },
         { "foo", JsonSchemaTypes.String, null, null },
         { "1,2", JsonSchemaTypes.Array, JsonSchemaTypes.Number, null },
-#if NET10_0_OR_GREATER
         { "1,foo", JsonSchemaTypes.Array, JsonSchemaTypes.Number, "Header 'test-header' is not of type 'array[Number]'" },
-#else
-        { "1,foo", JsonSchemaTypes.Array, JsonSchemaTypes.Number, "Header 'test-header' is not of type 'array[number]'" },
-#endif
     };
 
     [Theory]

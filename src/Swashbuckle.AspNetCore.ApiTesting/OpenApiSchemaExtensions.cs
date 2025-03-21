@@ -73,13 +73,8 @@ internal static class OpenApiSchemaExtensions
 
     internal static string TypeIdentifier(this OpenApiSchema schema)
     {
-        var idBuilder = new StringBuilder();
-
-#if NET10_0_OR_GREATER
-        idBuilder.Append(schema.Type.ToString().ToLowerInvariant());
-#else
-        idBuilder.Append(schema.Type);
-#endif
+        var idBuilder = new StringBuilder()
+            .Append(schema.Type.ToString().ToLowerInvariant());
 
         if (schema.Type == JsonSchemaTypes.Array && schema.Items != null)
         {

@@ -76,20 +76,6 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 jsonConverter: jsonConverter);
         }
 
-        [Obsolete("Provide jsonConverter function instead of enumValues")]
-        public static DataContract ForPrimitive(
-            Type underlyingType,
-            DataType dataType,
-            string dataFormat,
-            IEnumerable<object> enumValues)
-        {
-            return new DataContract(
-                underlyingType: underlyingType,
-                dataType: dataType,
-                dataFormat: dataFormat,
-                enumValues: enumValues);
-        }
-
         private DataContract(
             Type underlyingType,
             DataType dataType,
@@ -107,9 +93,6 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             UnderlyingType = underlyingType;
             DataType = dataType;
             DataFormat = dataFormat;
-#pragma warning disable CS0618 // Type or member is obsolete
-            EnumValues = enumValues;
-#pragma warning restore CS0618 // Type or member is obsolete
             ArrayItemType = arrayItemType;
             DictionaryValueType = dictionaryValueType;
             DictionaryKeys = dictionaryKeys;
@@ -131,9 +114,6 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         public string ObjectTypeNameProperty { get; }
         public string ObjectTypeNameValue { get; }
         public Func<object, string> JsonConverter { get; }
-
-        [Obsolete("Use JsonConverter")]
-        public IEnumerable<object> EnumValues { get; }
     }
 
     public enum DataType
@@ -148,32 +128,21 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
         Unknown
     }
 
-    public class DataProperty
+    public class DataProperty(
+        string name,
+        Type memberType,
+        bool isRequired = false,
+        bool isNullable = false,
+        bool isReadOnly = false,
+        bool isWriteOnly = false,
+        MemberInfo memberInfo = null)
     {
-        public DataProperty(
-            string name,
-            Type memberType,
-            bool isRequired = false,
-            bool isNullable = false,
-            bool isReadOnly = false,
-            bool isWriteOnly = false,
-            MemberInfo memberInfo = null)
-        {
-            Name = name;
-            IsRequired = isRequired;
-            IsNullable = isNullable;
-            IsReadOnly = isReadOnly;
-            IsWriteOnly = isWriteOnly;
-            MemberType = memberType;
-            MemberInfo = memberInfo;
-        }
-
-        public string Name { get; } 
-        public bool IsRequired { get; }
-        public bool IsNullable { get; }
-        public bool IsReadOnly { get; }
-        public bool IsWriteOnly { get; }
-        public Type MemberType { get; }
-        public MemberInfo MemberInfo { get; }
+        public string Name { get; } = name;
+        public bool IsRequired { get; } = isRequired;
+        public bool IsNullable { get; } = isNullable;
+        public bool IsReadOnly { get; } = isReadOnly;
+        public bool IsWriteOnly { get; } = isWriteOnly;
+        public Type MemberType { get; } = memberType;
+        public MemberInfo MemberInfo { get; } = memberInfo;
     }
 }

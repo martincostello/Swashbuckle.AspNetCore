@@ -6,8 +6,7 @@
     <IsPackable>true</IsPackable>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <PackageTags>swagger;openapi;test-first;spec-first;testing;aspnetcore</PackageTags>
-    <!-- HACK For now, only support .NET 10 and Microsoft.OpenApi v2 due to volume of breaking changes -->
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net9.0;net8.0;netstandard2.0</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +15,6 @@
     <PackageReference Include="Newtonsoft.Json" />
   </ItemGroup>
 
-  <!--
   <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard2.0' ">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="2.3.0" />
   </ItemGroup>
@@ -28,7 +26,6 @@
   <ItemGroup Condition=" '$(TargetFramework)' == 'net9.0' ">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="9.0.0" />
   </ItemGroup>
-  -->
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="10.0.0-preview.2.25164.1" />
@@ -36,6 +33,7 @@
 
   <ItemGroup>
     <!--
+    TODO Restore once migration to v2 completed
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
     -->
     <AdditionalFiles Include="PublicAPI\PublicAPI.Shipped.txt" />

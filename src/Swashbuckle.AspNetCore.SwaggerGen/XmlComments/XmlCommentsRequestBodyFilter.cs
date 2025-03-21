@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Xml.XPath;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen
 {
@@ -21,8 +22,13 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
             _options = options;
         }
 
-        public void Apply(OpenApiRequestBody requestBody, RequestBodyFilterContext context)
+        public void Apply(IOpenApiRequestBody requestBody, RequestBodyFilterContext context)
         {
+            if (requestBody is not OpenApiRequestBody concrete)
+            {
+                return;
+            }
+
             var bodyParameterDescription = context.BodyParameterDescription;
 
             if (bodyParameterDescription is not null)
@@ -30,14 +36,14 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                 var propertyInfo = bodyParameterDescription.PropertyInfo();
                 if (propertyInfo is not null)
                 {
-                    ApplyPropertyTagsForBody(requestBody, context, propertyInfo);
+                    ApplyPropertyTagsForBody(concrete, context, propertyInfo);
                 }
                 else
                 {
                     var parameterInfo = bodyParameterDescription.ParameterInfo();
                     if (parameterInfo is not null)
                     {
-                        ApplyParamTagsForBody(requestBody, context, parameterInfo);
+                        ApplyParamTagsForBody(concrete, context, parameterInfo);
                     }
                 }
             }
@@ -71,7 +77,10 @@ namespace Swashbuckle.AspNetCore.SwaggerGen
                             value.Description ??= summary;
                             if (!string.IsNullOrEmpty(example))
                             {
-                                value.Example ??= XmlCommentsExampleHelper.Create(context.SchemaRepository, value, example);
+                                if (value is OpenApiSchema s)
+                                {
+                                    s.Example ??= XmlCommentsExampleHelper.Create(context.SchemaRepository, value, example);
+                                }
                             }
                         }
                     }
