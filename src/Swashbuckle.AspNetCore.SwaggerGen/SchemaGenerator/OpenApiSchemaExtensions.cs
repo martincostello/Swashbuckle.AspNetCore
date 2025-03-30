@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.Interfaces;
+using Microsoft.OpenApi.Models.References;
 using AnnotationsDataType = System.ComponentModel.DataAnnotations.DataType;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen;
@@ -29,113 +31,120 @@ public static class OpenApiSchemaExtensions
         [AnnotationsDataType.Upload] = "binary",
     };
 
-    public static void ApplyValidationAttributes(this OpenApiSchema schema, IEnumerable<object> customAttributes)
+    public static void ApplyValidationAttributes(this IOpenApiSchema schema, IEnumerable<object> customAttributes)
     {
+        if (schema is not OpenApiSchema concrete)
+        {
+            return;
+        }
+
         foreach (var attribute in customAttributes)
         {
             if (attribute is DataTypeAttribute dataTypeAttribute)
             {
-                ApplyDataTypeAttribute(schema, dataTypeAttribute);
+                ApplyDataTypeAttribute(concrete, dataTypeAttribute);
             }
             else if (attribute is MinLengthAttribute minLengthAttribute)
             {
-                ApplyMinLengthAttribute(schema, minLengthAttribute);
+                ApplyMinLengthAttribute(concrete, minLengthAttribute);
             }
             else if (attribute is MaxLengthAttribute maxLengthAttribute)
             {
-                ApplyMaxLengthAttribute(schema, maxLengthAttribute);
+                ApplyMaxLengthAttribute(concrete, maxLengthAttribute);
             }
 #if NET
             else if (attribute is LengthAttribute lengthAttribute)
             {
-                ApplyLengthAttribute(schema, lengthAttribute);
+                ApplyLengthAttribute(concrete, lengthAttribute);
             }
             else if (attribute is Base64StringAttribute base64Attribute)
             {
-                ApplyBase64Attribute(schema);
+                ApplyBase64Attribute(concrete);
             }
 #endif
             else if (attribute is RangeAttribute rangeAttribute)
             {
-                ApplyRangeAttribute(schema, rangeAttribute);
+                ApplyRangeAttribute(concrete, rangeAttribute);
             }
             else if (attribute is RegularExpressionAttribute regularExpressionAttribute)
             {
-                ApplyRegularExpressionAttribute(schema, regularExpressionAttribute);
+                ApplyRegularExpressionAttribute(concrete, regularExpressionAttribute);
             }
             else if (attribute is StringLengthAttribute stringLengthAttribute)
             {
-                ApplyStringLengthAttribute(schema, stringLengthAttribute);
+                ApplyStringLengthAttribute(concrete, stringLengthAttribute);
             }
             else if (attribute is ReadOnlyAttribute readOnlyAttribute)
             {
-                ApplyReadOnlyAttribute(schema, readOnlyAttribute);
+                ApplyReadOnlyAttribute(concrete, readOnlyAttribute);
             }
             else if (attribute is DescriptionAttribute descriptionAttribute)
             {
-                ApplyDescriptionAttribute(schema, descriptionAttribute);
+                ApplyDescriptionAttribute(concrete, descriptionAttribute);
             }
         }
     }
 
-    public static void ApplyRouteConstraints(this OpenApiSchema schema, ApiParameterRouteInfo routeInfo)
+    public static void ApplyRouteConstraints(this IOpenApiSchema schema, ApiParameterRouteInfo routeInfo)
     {
+        if (schema is not OpenApiSchema concrete)
+        {
+            return;
+        }
+
         foreach (var constraint in routeInfo.Constraints)
         {
             if (constraint is MinRouteConstraint minRouteConstraint)
             {
-                ApplyMinRouteConstraint(schema, minRouteConstraint);
+                ApplyMinRouteConstraint(concrete, minRouteConstraint);
             }
             else if (constraint is MaxRouteConstraint maxRouteConstraint)
             {
-                ApplyMaxRouteConstraint(schema, maxRouteConstraint);
+                ApplyMaxRouteConstraint(concrete, maxRouteConstraint);
             }
             else if (constraint is MinLengthRouteConstraint minLengthRouteConstraint)
             {
-                ApplyMinLengthRouteConstraint(schema, minLengthRouteConstraint);
+                ApplyMinLengthRouteConstraint(concrete, minLengthRouteConstraint);
             }
             else if (constraint is MaxLengthRouteConstraint maxLengthRouteConstraint)
             {
-                ApplyMaxLengthRouteConstraint(schema, maxLengthRouteConstraint);
+                ApplyMaxLengthRouteConstraint(concrete, maxLengthRouteConstraint);
             }
             else if (constraint is RangeRouteConstraint rangeRouteConstraint)
             {
-                ApplyRangeRouteConstraint(schema, rangeRouteConstraint);
+                ApplyRangeRouteConstraint(concrete, rangeRouteConstraint);
             }
             else if (constraint is RegexRouteConstraint regexRouteConstraint)
             {
-                ApplyRegexRouteConstraint(schema, regexRouteConstraint);
+                ApplyRegexRouteConstraint(concrete, regexRouteConstraint);
             }
             else if (constraint is LengthRouteConstraint lengthRouteConstraint)
             {
-                ApplyLengthRouteConstraint(schema, lengthRouteConstraint);
+                ApplyLengthRouteConstraint(concrete, lengthRouteConstraint);
             }
             else if (constraint is FloatRouteConstraint or DecimalRouteConstraint)
             {
-                schema.Type = JsonSchemaTypes.Number;
+                concrete.Type = JsonSchemaTypes.Number;
             }
             else if (constraint is LongRouteConstraint or IntRouteConstraint)
             {
-                schema.Type = JsonSchemaTypes.Integer;
+                concrete.Type = JsonSchemaTypes.Integer;
             }
             else if (constraint is GuidRouteConstraint or StringRouteConstraint)
             {
-                schema.Type = JsonSchemaTypes.String;
+                concrete.Type = JsonSchemaTypes.String;
             }
             else if (constraint is BoolRouteConstraint)
             {
-                schema.Type = JsonSchemaTypes.Boolean;
+                concrete.Type = JsonSchemaTypes.Boolean;
             }
         }
     }
 
-#if NET10_0_OR_GREATER
-    internal static JsonSchemaType? ResolveType(this OpenApiSchema schema, SchemaRepository schemaRepository)
-#else
-    internal static string ResolveType(this OpenApiSchema schema, SchemaRepository schemaRepository)
-#endif
+    internal static JsonSchemaType? ResolveType(this IOpenApiSchema schema, SchemaRepository schemaRepository)
     {
-        if (schema.Reference != null && schemaRepository.Schemas.TryGetValue(schema.Reference.Id, out OpenApiSchema definitionSchema))
+        if (schema is OpenApiSchemaReference reference &&
+            schemaRepository.Schemas.TryGetValue(reference.Id, out var definitionSchema))
         {
             return definitionSchema.ResolveType(schemaRepository);
         }

@@ -15,6 +15,8 @@
     <ProjectReference Include="..\Swashbuckle.AspNetCore.SwaggerGen\Swashbuckle.AspNetCore.SwaggerGen.csproj" />
   </ItemGroup>
 
+  <!--
+  TODO Enable when fixed for Microsoft.OpenApi v2.preview7+
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
     <AdditionalFiles Include="PublicAPI\PublicAPI.Shipped.txt" />
@@ -24,5 +26,6 @@
     <AdditionalFiles Include="PublicAPI\$(TargetFramework)\PublicAPI.Shipped.txt" />
     <AdditionalFiles Include="PublicAPI\$(TargetFramework)\PublicAPI.Unshipped.txt" />
   </ItemGroup>
+  -->
 
 </Project>

@@ -13,14 +13,9 @@ using Microsoft.AspNetCore.Routing.Constraints;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi.Models.References;
 using Swashbuckle.AspNetCore.SwaggerGen.Test.Fixtures;
 using Swashbuckle.AspNetCore.TestSupport;
-
-#if NET10_0_OR_GREATER
-using JsonSchemaType = Microsoft.OpenApi.Models.JsonSchemaType;
-#else
-using JsonSchemaType = string;
-#endif
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test;
 
@@ -105,8 +100,8 @@ public class JsonSerializerSchemaGeneratorTests
 
         var referenceSchema = Subject().GenerateSchema(type, schemaRepository);
 
-        Assert.NotNull(referenceSchema.Reference);
-        var schema = schemaRepository.Schemas[referenceSchema.Reference.Id];
+        var reference = Assert.IsType<OpenApiSchemaReference>(referenceSchema);
+        var schema = schemaRepository.Schemas[reference.Reference.Id];
         Assert.Equal(JsonSchemaTypes.Integer, schema.Type);
         Assert.Equal(expectedFormat, schema.Format);
         Assert.NotNull(schema.Enum);
@@ -121,8 +116,8 @@ public class JsonSerializerSchemaGeneratorTests
 
         var referenceSchema = Subject().GenerateSchema(enumType, schemaRepository);
 
-        Assert.NotNull(referenceSchema.Reference);
-        var schema = schemaRepository.Schemas[referenceSchema.Reference.Id];
+        var reference = Assert.IsType<OpenApiSchemaReference>(referenceSchema);
+        var schema = schemaRepository.Schemas[reference.Reference.Id];
         Assert.Equal(enumType.GetEnumValues().Cast<HttpStatusCode>().Distinct().Count(), schema.Enum.Count);
     }
 
@@ -319,11 +314,7 @@ public class JsonSerializerSchemaGeneratorTests
     [InlineData(typeof(TypeWithDefaultAttributes), nameof(TypeWithDefaultAttributes.StringWithDefault), "\"foobar\"")]
     [InlineData(typeof(TypeWithDefaultAttributes), nameof(TypeWithDefaultAttributes.IntArrayWithDefault), "[\n  1,\n  2,\n  3\n]")]
     [InlineData(typeof(TypeWithDefaultAttributes), nameof(TypeWithDefaultAttributes.StringArrayWithDefault), "[\n  \"foo\",\n  \"bar\"\n]")]
-#if NET10_0_OR_GREATER
     [InlineData(typeof(TypeWithDefaultAttributes), nameof(TypeWithDefaultAttributes.NullableIntWithDefaultNullValue), null)]
-#else
-    [InlineData(typeof(TypeWithDefaultAttributes), nameof(TypeWithDefaultAttributes.NullableIntWithDefaultNullValue), "null")]
-#endif
     [InlineData(typeof(TypeWithDefaultAttributes), nameof(TypeWithDefaultAttributes.NullableIntWithDefaultValue), "2147483647")]
     [UseInvariantCulture]
     public void GenerateSchema_SetsDefault_IfPropertyHasDefaultValueAttribute(
@@ -539,11 +530,7 @@ public class JsonSerializerSchemaGeneratorTests
         var definitionSchema = schema.Reference == null ? schema : schemaRepository.Schemas[schema.Reference.Id];
         Assert.Contains("X-foo", definitionSchema.Extensions.Keys);
 
-#if NET10_0_OR_GREATER
         Assert.Equal("v1", ((OpenApiAny)definitionSchema.Extensions["X-docName"]).Node.GetValue<string>());
-#else
-        Assert.Equal("v1", ((OpenApiString)definitionSchema.Extensions["X-docName"]).Value);
-#endif
     }
 
     [Fact]

@@ -10,11 +10,7 @@ namespace Swashbuckle.AspNetCore.Annotations.Test;
 
 public class AnnotationsOperationFilterTests
 {
-#if NET10_0_OR_GREATER
-    [Fact(Skip = "TODO Need to fix tags not being added.")]
-#else
     [Fact]
-#endif
     public void Apply_EnrichesOperationMetadata_IfActionDecoratedWithSwaggerOperationAttribute()
     {
         var operation = new OpenApiOperation();
@@ -129,11 +125,7 @@ public class AnnotationsOperationFilterTests
         Assert.NotEmpty(operation.Extensions);
     }
 
-#if NET10_0_OR_GREATER
-    [Fact(Skip = "TODO Need to fix tags not being added.")]
-#else
     [Fact]
-#endif
     public void Apply_EnrichesOperationMetadata_IfMinimalActionDecoratedWithSwaggerOperationAttribute()
     {
         var operationAttribute = new SwaggerOperationAttribute("Summary for ActionWithSwaggerOperationAttribute")

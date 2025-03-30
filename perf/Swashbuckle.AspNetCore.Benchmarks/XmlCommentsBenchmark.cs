@@ -97,7 +97,7 @@ public class XmlCommentsBenchmark
         // Parameter
         _parameter = new()
         {
-            Schema = new()
+            Schema = new OpenApiSchema()
             {
                 Type = JsonSchemaTypes.String,
                 Description = "schema-level description",
@@ -106,8 +106,9 @@ public class XmlCommentsBenchmark
 
         var propertyInfo = typeof(XmlAnnotatedType).GetProperty(nameof(XmlAnnotatedType.StringProperty));
         var apiParameterDescription = new ApiParameterDescription();
+        var xmlDocMembers = XmlCommentsDocumentHelper.CreateMemberDictionary(xPathDocument);
         _parameterFilterContext = new ParameterFilterContext(apiParameterDescription, null, null, propertyInfo: propertyInfo);
-        _parameterFilter = new XmlCommentsParameterFilter(xPathDocument);
+        _parameterFilter = new XmlCommentsParameterFilter(xmlDocMembers, new());
 
         // Request Body
         _requestBody = new OpenApiRequestBody
@@ -116,7 +117,7 @@ public class XmlCommentsBenchmark
             {
                 ["application/json"] = new()
                 {
-                    Schema = new()
+                    Schema = new OpenApiSchema()
                     {
                         Type = JsonSchemaTypes.String,
                     },
@@ -132,7 +133,7 @@ public class XmlCommentsBenchmark
             ParameterDescriptor = new ControllerParameterDescriptor { ParameterInfo = parameterInfo }
         };
         _requestBodyFilterContext = new RequestBodyFilterContext(bodyParameterDescription, null, null, null);
-        _requestBodyFilter = new XmlCommentsRequestBodyFilter(xPathDocument);
+        _requestBodyFilter = new XmlCommentsRequestBodyFilter(xmlDocMembers, new());
     }
 
     [Benchmark]

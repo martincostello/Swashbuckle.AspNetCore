@@ -31,11 +31,14 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" VersionOverride="10.0.0-preview.1.25120.3" />
   </ItemGroup>
 
+  <!--
+  TODO Enable when fixed for Microsoft.OpenApi v2.preview7+
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
     <AdditionalFiles Include="PublicAPI\PublicAPI.Shipped.txt" />
     <AdditionalFiles Include="PublicAPI\PublicAPI.Unshipped.txt" />
   </ItemGroup>
+  -->
 
   <ItemGroup>
     <Compile Include="..\Shared\JsonSchemaTypes.cs" Link="JsonSchemaTypes.cs" />
