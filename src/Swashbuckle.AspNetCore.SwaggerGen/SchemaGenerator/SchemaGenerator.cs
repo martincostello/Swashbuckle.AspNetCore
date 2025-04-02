@@ -260,7 +260,7 @@ public class SchemaGenerator(
 
     private IOpenApiSchema GenerateConcreteSchema(DataContract dataContract, SchemaRepository schemaRepository)
     {
-        if (TryGetCustomTypeMapping(dataContract.UnderlyingType, out Func<OpenApiSchema> customSchemaFactory))
+        if (TryGetCustomTypeMapping(dataContract.UnderlyingType, out Func<IOpenApiSchema> customSchemaFactory))
         {
             return customSchemaFactory();
         }
@@ -319,7 +319,7 @@ public class SchemaGenerator(
             : schemaFactory();
     }
 
-    private bool TryGetCustomTypeMapping(Type modelType, out Func<OpenApiSchema> schemaFactory)
+    private bool TryGetCustomTypeMapping(Type modelType, out Func<IOpenApiSchema> schemaFactory)
     {
         return
             _generatorOptions.CustomTypeMappings.TryGetValue(modelType, out schemaFactory) ||

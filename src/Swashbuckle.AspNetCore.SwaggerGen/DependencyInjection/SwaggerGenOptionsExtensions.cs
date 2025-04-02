@@ -148,7 +148,7 @@ public static class SwaggerGenOptionsExtensions
     public static void AddSecurityDefinition(
         this SwaggerGenOptions swaggerGenOptions,
         string name,
-        OpenApiSecurityScheme securityScheme)
+        IOpenApiSecurityScheme securityScheme)
     {
         swaggerGenOptions.SwaggerGeneratorOptions.SecuritySchemes.Add(name, securityScheme);
     }
@@ -177,7 +177,7 @@ public static class SwaggerGenOptionsExtensions
     public static void MapType(
         this SwaggerGenOptions swaggerGenOptions,
         Type type,
-        Func<OpenApiSchema> schemaFactory)
+        Func<IOpenApiSchema> schemaFactory)
     {
         swaggerGenOptions.SchemaGeneratorOptions.CustomTypeMappings.Add(type, schemaFactory);
     }
@@ -190,7 +190,7 @@ public static class SwaggerGenOptionsExtensions
     /// <param name="schemaFactory">A factory method that generates Schema's for the provided type</param>
     public static void MapType<T>(
         this SwaggerGenOptions swaggerGenOptions,
-        Func<OpenApiSchema> schemaFactory)
+        Func<IOpenApiSchema> schemaFactory)
     {
         swaggerGenOptions.MapType(typeof(T), schemaFactory);
     }

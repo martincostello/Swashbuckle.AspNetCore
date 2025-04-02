@@ -144,7 +144,7 @@ public static class OpenApiSchemaExtensions
     internal static JsonSchemaType? ResolveType(this IOpenApiSchema schema, SchemaRepository schemaRepository)
     {
         if (schema is OpenApiSchemaReference reference &&
-            schemaRepository.Schemas.TryGetValue(reference.Id, out var definitionSchema))
+            schemaRepository.Schemas.TryGetValue(reference.Reference.Id, out var definitionSchema))
         {
             return definitionSchema.ResolveType(schemaRepository);
         }
