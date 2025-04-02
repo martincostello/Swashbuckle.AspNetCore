@@ -14,5 +14,13 @@ internal static class JsonExtensions
     };
 
     public static string ToJson(this JsonNode value)
-        => value.ToJsonString(Options);
+    {
+        var json = value.ToJsonString(Options);
+
+#if !NET9_0_OR_GREATER
+        json = json.Replace("\r\n", "\n");
+#endif
+
+        return json;
+    }
 }

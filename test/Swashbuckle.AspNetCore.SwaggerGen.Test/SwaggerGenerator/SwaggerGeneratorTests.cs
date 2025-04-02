@@ -1257,7 +1257,7 @@ public class SwaggerGeneratorTests
 
         var document = subject.GetSwagger("v1");
 
-        Assert.Equal(["resource"], [.. document.Paths["/resource"].Operations[OperationType.Post].Tags?.Select(t => t.Name)]);
+        Assert.Equal(["resource"], [.. document.Paths["/resource"].Operations[OperationType.Post].Tags?.Select(t => t.Reference.Id)]);
     }
 
     [Fact]
@@ -1281,7 +1281,7 @@ public class SwaggerGeneratorTests
 
         var document = subject.GetSwagger("v1");
 
-        Assert.Equal(["Some", "Tags", "Here"], [.. document.Paths["/resource"].Operations[OperationType.Post].Tags?.Select(t => t.Name)]);
+        Assert.Equal(["Some", "Tags", "Here"], [.. document.Paths["/resource"].Operations[OperationType.Post].Tags?.Select(t => t.Reference.Id)]);
     }
 
 #if NET

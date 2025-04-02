@@ -600,8 +600,8 @@ public class SwaggerGenerator(
         var description = schema.Description;
         if (string.IsNullOrEmpty(description) &&
             schema is OpenApiSchemaReference reference &&
-            !string.IsNullOrEmpty(reference.Id) &&
-            schemaRepository.Schemas.TryGetValue(reference.Id, out var openApiSchema))
+            !string.IsNullOrEmpty(reference.Reference.Id) &&
+            schemaRepository.Schemas.TryGetValue(reference.Reference.Id, out var openApiSchema))
         {
             description = openApiSchema.Description;
         }
