@@ -54,12 +54,12 @@ public class AnnotationsRequestBodyFilter : IRequestBodyFilter
 
     private static void ApplySwaggerRequestBodyAttribute(IOpenApiRequestBody parameter, SwaggerRequestBodyAttribute swaggerRequestBodyAttribute)
     {
-        if (swaggerRequestBodyAttribute.Description != null)
+        if (swaggerRequestBodyAttribute.Description is { } description)
         {
-            parameter.Description = swaggerRequestBodyAttribute.Description;
+            parameter.Description = description;
         }
 
-        if (parameter is OpenApiParameter concrete &&
+        if (parameter is OpenApiRequestBody concrete &&
             swaggerRequestBodyAttribute.RequiredFlag.HasValue)
         {
             concrete.Required = swaggerRequestBodyAttribute.RequiredFlag.Value;

@@ -42,9 +42,9 @@ public class AnnotationsParameterFilter : IParameterFilter
 
     private static void ApplySwaggerParameterAttribute(IOpenApiParameter parameter, SwaggerParameterAttribute swaggerParameterAttribute)
     {
-        if (swaggerParameterAttribute.Description != null)
+        if (swaggerParameterAttribute.Description is { } description)
         {
-            parameter.Description = swaggerParameterAttribute.Description;
+            parameter.Description = description;
         }
 
         if (parameter is OpenApiParameter concrete &&
