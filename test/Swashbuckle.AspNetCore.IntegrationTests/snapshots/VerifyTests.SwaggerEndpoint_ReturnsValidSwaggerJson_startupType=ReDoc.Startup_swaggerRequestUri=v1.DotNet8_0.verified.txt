@@ -179,7 +179,8 @@
           "format": "int32"
         },
         "description": {
-          "type": "string"
+          "type": "string",
+          "x-nullable": true
         }
       },
       "additionalProperties": false
