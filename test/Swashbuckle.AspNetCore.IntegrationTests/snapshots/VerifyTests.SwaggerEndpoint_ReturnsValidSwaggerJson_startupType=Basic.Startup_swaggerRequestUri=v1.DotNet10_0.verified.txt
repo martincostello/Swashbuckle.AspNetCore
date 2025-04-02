@@ -734,7 +734,7 @@
                     "format": "binary"
                   },
                   "dateTimeKind": {
-                    "description": "Description for dateTimeKind"
+                    "$ref": "#/components/schemas/DateTimeKind"
                   }
                 }
               },
