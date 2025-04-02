@@ -835,7 +835,7 @@ public class SwaggerGenerator(
         var schema = GenerateSchemaFromFormParameters(formParameters, schemaRepository);
 
         var totalProperties = schema.AllOf
-            ?.FirstOrDefault(s => s.Properties.Count > 0)
+            ?.FirstOrDefault(s => s.Properties?.Count > 0)
             ?.Properties ?? schema.Properties;
 
         return new OpenApiRequestBody
@@ -845,10 +845,10 @@ public class SwaggerGenerator(
                 contentType => new OpenApiMediaType
                 {
                     Schema = schema,
-                    Encoding = totalProperties.ToDictionary(
+                    Encoding = totalProperties?.ToDictionary(
                         entry => entry.Key,
                         entry => new OpenApiEncoding { Style = ParameterStyle.Form }
-                    )
+                    ) ?? []
                 })
         };
     }

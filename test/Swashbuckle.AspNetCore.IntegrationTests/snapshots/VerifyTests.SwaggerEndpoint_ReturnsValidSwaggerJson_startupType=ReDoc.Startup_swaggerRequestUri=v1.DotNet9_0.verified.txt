@@ -32,8 +32,8 @@
           "200": {
             "description": "OK",
             "schema": {
-              "format": "int32",
-              "type": "integer"
+              "type": "integer",
+              "format": "int32"
             }
           }
         }
@@ -175,8 +175,8 @@
       "type": "object",
       "properties": {
         "id": {
-          "format": "int32",
-          "type": "integer"
+          "type": "integer",
+          "format": "int32"
         },
         "description": {
           "type": "string"

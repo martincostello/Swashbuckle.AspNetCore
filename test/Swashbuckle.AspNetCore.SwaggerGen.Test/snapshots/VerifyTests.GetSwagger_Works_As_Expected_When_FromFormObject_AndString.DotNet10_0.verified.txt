@@ -15,7 +15,9 @@
             "multipart/form-data": {
               "schema": {
                 "allOf": [
-                  { },
+                  {
+                    "$ref": "#/components/schemas/SwaggerIngoreAnnotatedType"
+                  },
                   {
                     "type": "object",
                     "properties": {

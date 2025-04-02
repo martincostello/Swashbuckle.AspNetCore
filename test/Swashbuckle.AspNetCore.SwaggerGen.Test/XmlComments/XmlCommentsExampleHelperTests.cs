@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using Microsoft.OpenApi.Models;
 
 namespace Swashbuckle.AspNetCore.SwaggerGen.Test;
@@ -57,7 +58,8 @@ public class XmlCommentsExampleHelperTests
         var example = XmlCommentsExampleHelper.Create(
             schemaRepository, schema, "null");
 
-        Assert.Null(example);
+        Assert.NotNull(example);
+        Assert.Equal("null", example.GetValue<string>());
     }
 
     [Fact]

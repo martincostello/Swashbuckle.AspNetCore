@@ -13,7 +13,9 @@
         "requestBody": {
           "content": {
             "multipart/form-data": {
-              "schema": { }
+              "schema": {
+                "$ref": "#/components/schemas/SwaggerIngoreAnnotatedType"
+              }
             }
           }
         },
