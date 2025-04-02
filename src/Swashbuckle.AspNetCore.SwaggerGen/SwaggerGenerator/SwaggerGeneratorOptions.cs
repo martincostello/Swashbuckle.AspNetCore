@@ -63,7 +63,7 @@ public class SwaggerGeneratorOptions
 
     public IDictionary<string, IOpenApiSecurityScheme> SecuritySchemes { get; set; }
 
-    public IList<OpenApiSecurityRequirement> SecurityRequirements { get; set; }
+    public IList<Func<OpenApiDocument, OpenApiSecurityRequirement>> SecurityRequirements { get; set; }
 
     public IComparer<string> SchemaComparer { get; set; }
 

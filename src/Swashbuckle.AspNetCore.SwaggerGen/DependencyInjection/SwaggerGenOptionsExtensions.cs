@@ -163,7 +163,7 @@ public static class SwaggerGenOptionsExtensions
     /// </param>
     public static void AddSecurityRequirement(
         this SwaggerGenOptions swaggerGenOptions,
-        OpenApiSecurityRequirement securityRequirement)
+        Func<OpenApiDocument, OpenApiSecurityRequirement> securityRequirement)
     {
         swaggerGenOptions.SwaggerGeneratorOptions.SecurityRequirements.Add(securityRequirement);
     }

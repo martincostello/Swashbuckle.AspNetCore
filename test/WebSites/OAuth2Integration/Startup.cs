@@ -73,10 +73,10 @@ public class Startup
                 }
             });
 
-            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            c.AddSecurityRequirement((document) => new OpenApiSecurityRequirement
             {
                 {
-                    new OpenApiSecuritySchemeReference("oauth2"),
+                    new OpenApiSecuritySchemeReference("oauth2", document),
                     ["readAccess", "writeAccess"]
                 }
             });

@@ -41,43 +41,59 @@ public class SwaggerGenerator(
         string host = null,
         string basePath = null)
     {
-        var (filterContext, swaggerDoc) = GetSwaggerDocumentWithoutPaths(documentName, host, basePath);
+        var (filterContext, document) = GetSwaggerDocumentWithoutPaths(documentName, host, basePath);
 
-        swaggerDoc.Paths = await GeneratePathsAsync(swaggerDoc, filterContext.ApiDescriptions, filterContext.SchemaRepository);
-        swaggerDoc.Components.SecuritySchemes = await GetSecuritySchemesAsync();
+        document.Paths = await GeneratePathsAsync(document, filterContext.ApiDescriptions, filterContext.SchemaRepository);
+        document.Components.SecuritySchemes = await GetSecuritySchemesAsync();
+
+        if (_options.SecurityRequirements is { Count: > 0 } requirements)
+        {
+            foreach (var requirement in requirements)
+            {
+                document.SecurityRequirements.Add(requirement(document));
+            }
+        }
 
         foreach (var filter in _options.DocumentAsyncFilters)
         {
-            await filter.ApplyAsync(swaggerDoc, filterContext, CancellationToken.None);
+            await filter.ApplyAsync(document, filterContext, CancellationToken.None);
         }
 
         foreach (var filter in _options.DocumentFilters)
         {
-            filter.Apply(swaggerDoc, filterContext);
+            filter.Apply(document, filterContext);
         }
 
-        SortSchemas(swaggerDoc);
+        SortSchemas(document);
 
-        return swaggerDoc;
+        return document;
     }
 
     public OpenApiDocument GetSwagger(string documentName, string host = null, string basePath = null)
     {
         try
         {
-            var (filterContext, swaggerDoc) = GetSwaggerDocumentWithoutPaths(documentName, host, basePath);
+            var (filterContext, document) = GetSwaggerDocumentWithoutPaths(documentName, host, basePath);
 
-            swaggerDoc.Paths = GeneratePaths(swaggerDoc, filterContext.ApiDescriptions, filterContext.SchemaRepository);
-            swaggerDoc.Components.SecuritySchemes = GetSecuritySchemesAsync().Result;
+            document.Paths = GeneratePaths(document, filterContext.ApiDescriptions, filterContext.SchemaRepository);
+            document.Components.SecuritySchemes = GetSecuritySchemesAsync().Result;
+
+            if (_options.SecurityRequirements is { Count: > 0 } requirements)
+            {
+                foreach (var requirement in requirements)
+                {
+                    document.SecurityRequirements.Add(requirement(document));
+                }
+            }
 
             foreach (var filter in _options.DocumentFilters)
             {
-                filter.Apply(swaggerDoc, filterContext);
+                filter.Apply(document, filterContext);
             }
 
-            SortSchemas(swaggerDoc);
+            SortSchemas(document);
 
-            return swaggerDoc;
+            return document;
         }
         catch (AggregateException ex)
         {
@@ -134,7 +150,6 @@ public class SwaggerGenerator(
             {
                 Schemas = schemaRepository.Schemas,
             },
-            SecurityRequirements = [.. _options.SecurityRequirements]
         };
 
         return (new DocumentFilterContext(applicableApiDescriptions, _schemaGenerator, schemaRepository), swaggerDoc);
