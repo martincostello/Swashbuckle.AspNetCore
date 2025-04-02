@@ -8,7 +8,7 @@
     "/resource": {
       "post": {
         "tags": [
-          null
+          "Fake"
         ],
         "responses": {
           "200": {
@@ -18,7 +18,7 @@
       },
       "get": {
         "tags": [
-          null
+          "Fake"
         ],
         "responses": {
           "200": {
