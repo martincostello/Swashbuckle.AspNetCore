@@ -33,10 +33,9 @@ public sealed class JsonValidator : IJsonValidator
         JToken instance,
         out IEnumerable<string> errorMessages)
     {
-        // TODO Why don't invalid references throw in Microsoft.OpenApi v2 anymore?
-        if (schema is OpenApiSchemaReference reference && !openApiDocument.Components.Schemas.Any((p) => p.Key == reference.Id))
+        if (schema is OpenApiSchemaReference reference && !openApiDocument.Components.Schemas.Any((p) => p.Key == reference.Reference.Id))
         {
-            throw new InvalidOperationException($"Invalid Reference identifier '{reference.Id}'.");
+            throw new InvalidOperationException($"Invalid Reference identifier '{reference.Reference.Id}'.");
         }
 
         var errors = new List<string>();
