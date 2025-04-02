@@ -375,7 +375,7 @@ public class JsonSerializerSchemaGeneratorTests
         Assert.Equal(true, schema.Properties["IntWithExclusiveRange"].ExclusiveMinimum);
         Assert.Equal(true, schema.Properties["IntWithExclusiveRange"].ExclusiveMaximum);
         Assert.Equal("byte", schema.Properties["StringWithBase64"].Format);
-        Assert.Equal(JsonSchemaTypes.String, schema.Properties["StringWithBase64"].Type);
+        Assert.Equal(JsonSchemaTypes.String | JsonSchemaType.Null, schema.Properties["StringWithBase64"].Type);
 #endif
         Assert.Null(schema.Properties["IntWithRange"].ExclusiveMinimum);
         Assert.Null(schema.Properties["IntWithRange"].ExclusiveMaximum);

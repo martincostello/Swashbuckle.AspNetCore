@@ -369,7 +369,7 @@ public class SchemaGenerator(
         {
             Type = JsonSchemaTypes.Array,
             Items = GenerateSchema(dataContract.ArrayItemType, schemaRepository),
-            UniqueItems = hasUniqueItems ? (bool?)true : null
+            UniqueItems = hasUniqueItems ? true : null
         };
     }
 

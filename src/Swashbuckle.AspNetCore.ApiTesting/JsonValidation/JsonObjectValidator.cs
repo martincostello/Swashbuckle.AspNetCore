@@ -8,7 +8,7 @@ public sealed class JsonObjectValidator(IJsonValidator jsonValidator) : IJsonVal
 {
     private readonly IJsonValidator _jsonValidator = jsonValidator;
 
-    public bool CanValidate(IOpenApiSchema schema) => schema.Type == JsonSchemaTypes.Object;
+    public bool CanValidate(IOpenApiSchema schema) => schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Object);
 
     public bool Validate(
         IOpenApiSchema schema,

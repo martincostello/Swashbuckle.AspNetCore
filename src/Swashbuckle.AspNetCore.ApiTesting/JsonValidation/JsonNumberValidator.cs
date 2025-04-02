@@ -6,7 +6,7 @@ namespace Swashbuckle.AspNetCore.ApiTesting;
 
 public sealed class JsonNumberValidator : IJsonValidator
 {
-    public bool CanValidate(IOpenApiSchema schema) => schema.Type == JsonSchemaTypes.Number;
+    public bool CanValidate(IOpenApiSchema schema) => schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Number);
 
     public bool Validate(
         IOpenApiSchema schema,

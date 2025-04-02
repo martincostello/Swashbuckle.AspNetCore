@@ -171,7 +171,7 @@ public static class OpenApiSchemaExtensions
 
     private static void ApplyMinLengthAttribute(OpenApiSchema schema, MinLengthAttribute minLengthAttribute)
     {
-        if (schema.Type == JsonSchemaTypes.Array)
+        if (schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Array))
         {
             schema.MinItems = minLengthAttribute.Length;
         }
@@ -183,7 +183,7 @@ public static class OpenApiSchemaExtensions
 
     private static void ApplyMinLengthRouteConstraint(OpenApiSchema schema, MinLengthRouteConstraint minLengthRouteConstraint)
     {
-        if (schema.Type == JsonSchemaTypes.Array)
+        if (schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Array))
         {
             schema.MinItems = minLengthRouteConstraint.MinLength;
         }
@@ -195,7 +195,7 @@ public static class OpenApiSchemaExtensions
 
     private static void ApplyMaxLengthAttribute(OpenApiSchema schema, MaxLengthAttribute maxLengthAttribute)
     {
-        if (schema.Type == JsonSchemaTypes.Array)
+        if (schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Array))
         {
             schema.MaxItems = maxLengthAttribute.Length;
         }
@@ -207,7 +207,7 @@ public static class OpenApiSchemaExtensions
 
     private static void ApplyMaxLengthRouteConstraint(OpenApiSchema schema, MaxLengthRouteConstraint maxLengthRouteConstraint)
     {
-        if (schema.Type == JsonSchemaTypes.Array)
+        if (schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Array))
         {
             schema.MaxItems = maxLengthRouteConstraint.MaxLength;
         }
@@ -221,7 +221,7 @@ public static class OpenApiSchemaExtensions
 
     private static void ApplyLengthAttribute(OpenApiSchema schema, LengthAttribute lengthAttribute)
     {
-        if (schema.Type == JsonSchemaTypes.Array)
+        if (schema.Type is { } type && type.HasFlag(JsonSchemaTypes.Array))
         {
             schema.MinItems = lengthAttribute.MinimumLength;
             schema.MaxItems = lengthAttribute.MaximumLength;
