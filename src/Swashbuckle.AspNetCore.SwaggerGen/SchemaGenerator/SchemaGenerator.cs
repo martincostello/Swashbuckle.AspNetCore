@@ -162,10 +162,7 @@ public class SchemaGenerator(
         if (_generatorOptions.UseAllOfToExtendReferenceSchemas && schema is OpenApiSchemaReference reference)
         {
             // TODO Is this correct?
-            schema = new OpenApiSchema()
-            {
-                AllOf = [reference],
-            };
+            schema = new OpenApiSchema() { AllOf = [reference] };
         }
 
         if (schema is OpenApiSchema concrete)

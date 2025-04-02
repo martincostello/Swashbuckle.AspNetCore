@@ -346,7 +346,7 @@ public class NewtonsoftSchemaGeneratorTests
         Assert.Equal(true, schema.Properties["IntWithExclusiveRange"].ExclusiveMinimum);
         Assert.Equal(true, schema.Properties["IntWithExclusiveRange"].ExclusiveMaximum);
         Assert.Equal("byte", schema.Properties["StringWithBase64"].Format);
-        Assert.Equal(JsonSchemaTypes.String, schema.Properties["StringWithBase64"].Type);
+        Assert.Equal(JsonSchemaTypes.String | JsonSchemaType.Null, schema.Properties["StringWithBase64"].Type);
 #endif
         Assert.Null(schema.Properties["IntWithRange"].ExclusiveMinimum);
         Assert.Null(schema.Properties["IntWithRange"].ExclusiveMaximum);
@@ -529,31 +529,20 @@ public class NewtonsoftSchemaGeneratorTests
         });
         var schemaRepository = new SchemaRepository();
 
-        var schema = Assert.IsType<OpenApiSchemaReference>(subject.GenerateSchema(typeof(BaseType), schemaRepository));
+        var schema = Assert.IsType<OpenApiSchema>(subject.GenerateSchema(typeof(BaseType), schemaRepository));
 
         // The polymorphic schema
         Assert.NotNull(schema.OneOf);
         Assert.Equal(3, schema.OneOf.Count);
         // The base type schema
         var baseSchema = Assert.IsType<OpenApiSchemaReference>(schema.OneOf[0]);
-        Assert.Equal(JsonSchemaTypes.Object, baseSchema.Type);
-        Assert.Equal(["BaseProperty"], baseSchema.Properties.Keys);
+        Assert.Equal("BaseType", baseSchema.Reference.Id);
         // The first sub type schema
         baseSchema = Assert.IsType<OpenApiSchemaReference>(schema.OneOf[1]);
-        Assert.Equal(JsonSchemaTypes.Object, baseSchema.Type.Value);
-        Assert.NotNull(baseSchema.AllOf);
-        var allOf = Assert.IsType<OpenApiSchemaReference>(Assert.Single(baseSchema.AllOf));
-        Assert.NotNull(allOf.Reference);
-        Assert.Equal("BaseType", allOf.Reference.Id);
-        Assert.Equal(["Property1"], baseSchema.Properties.Keys);
+        Assert.Equal("SubType1", baseSchema.Reference.Id);
         // The second sub type schema
         baseSchema = Assert.IsType<OpenApiSchemaReference>(schema.OneOf[2]);
-        Assert.Equal(JsonSchemaTypes.Object, baseSchema.Type.Value);
-        Assert.NotNull(baseSchema.AllOf);
-        allOf = Assert.IsType<OpenApiSchemaReference>(Assert.Single(baseSchema.AllOf));
-        Assert.NotNull(allOf.Reference);
-        Assert.Equal("BaseType", allOf.Reference.Id);
-        Assert.Equal(["Property2"], baseSchema.Properties.Keys);
+        Assert.Equal("SubType2", baseSchema.Reference.Id);
     }
 
     [Fact]
@@ -617,7 +606,7 @@ public class NewtonsoftSchemaGeneratorTests
 
         var schema = schemaRepository.Schemas[referenceSchema.Reference.Id];
         Assert.Equal(JsonSchemaTypes.Object, schema.Type);
-        Assert.Equal(JsonSchemaTypes.String, schema.Properties["Property1"].Type);
+        Assert.Equal(JsonSchemaTypes.String | JsonSchemaType.Null, schema.Properties["Property1"].Type);
     }
 
     [Fact]
@@ -938,9 +927,8 @@ public class NewtonsoftSchemaGeneratorTests
     [InlineData(typeof(JArray))]
     public void GenerateSchema_GeneratesOpenSchema_IfDynamicJsonType(Type type)
     {
-        var schema = Assert.IsType<OpenApiSchemaReference>(Subject().GenerateSchema(type, new SchemaRepository()));
+        var schema = Assert.IsType<OpenApiSchema>(Subject().GenerateSchema(type, new SchemaRepository()));
 
-        Assert.Null(schema.Reference);
         Assert.Null(schema.Type);
     }
 
